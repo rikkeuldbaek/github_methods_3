@@ -13,10 +13,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load(dplyr)
-
-pacman::p_load(tidyverse)
-pacman::p_load(tidyverse, ggplot2) hdhdhd
+pacman::p_load(dplyr, tidyverse)
 
 ```
 
@@ -103,7 +100,19 @@ a_list = [1, 'a', 2.3] # square brackets initialize lists that can contain any c
 ## Note that Python is zero-indexed ()
 print(a_list[0]) ## prints the first entry
 print(a_list[1]) ## prints the second entry
+print(a_list[2])
+
+
 ```
+
+###my own try
+```{python}
+#laver lige en python chunk lålå
+name= "Rikke"
+print(name)
+```
+
+
 ### Zero-indexing (reference)
 https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html
 
@@ -142,6 +151,11 @@ _[, 1]   mpg   Miles/(US) gallon
 [,10]	 gear	 Number of forward gears  
 [,11]	 carb	 Number of carburetors_  
 
+```{r}
+
+head(mtcars)
+```
+
 
 ## Miles per gallon and weight
 
@@ -172,13 +186,71 @@ The general linear model: $Y = X \beta + \epsilon$:
 Do a linear regression, expressing fuel usage as a function of weight using the function __lm__  
 ```{r, eval=FALSE}
 data(mtcars)
-model <- lm(formula=..., data=...)
+ls.str(mtcars)
+
+model <- lm(mpg~wt, data= mtcars)
+
+summary(model) #per increment of weight, miles per gallon(mgp) goes down by -5.3445
 ```
 1. extract $\hat{\beta}$, $Y$, $\hat{Y}$, $X$ and $\epsilon$ from __model__ (hint: have a look at the function __model.matrix__)  
     i. create a plot that illustrates $Y$ and $\hat{Y}$ (if you are feeling ambitious, also include $\epsilon$ (hint: you can use the function __arrows__))
+```{r}
+#extracting X (design matrix)
+X<- model.matrix(model)
+
+#extracting y
+Y <- mtcars$mpg
+
+#extracting  beta-hat
+bhat <- solve(t(X) %*% X) %*% t(X) %*% Y
+
+
+#extracting epsilon
+X2 <- solve(t(X) %*% X)
+
+# Then we can derive our residuals
+n <- length(Y) # number of observations
+p <- ncol(X) - 1 # number of covariates
+i <- diag(1, nrow = n, ncol = n) # identity matrix
+h <- X %*% X2 %*% t(X) # hat matrix of X
+epsilon <- (i - h) %*% Y # Model residuals
+print(data.table::data.table(epsilon)[, .(Residuals = V1)])
+
+####OR generate errors like this (this is for my own sake, ignore please)
+err<- tibble(res_extract_model=residuals(model))
+df <- tibble(yhat=yhat, y=mtcars$mpg, errors = (y - yhat))
+df1<- cbind(df,err);print(df1) #errors from the model and manually calculated 
+
+# extracting y-hats 
+yhat <- X %*% bhat
+
+#plot that illustrates y's and estimated y's
+mtcars %>% 
+  ggplot(aes(wt, mpg))+
+  geom_point(aes(y = yhat), colour = "orange") +
+  geom_point(aes(y = Y), colour = "darkred")
+  
+```
+
+
 2. estimate $\beta$ for a quadratic model ($y = {\beta}_{2} x^2 + {\beta}_{1} x + {\beta}_{0}$) using ordinary least squares _without_ using __lm__; $\hat{\beta} = {({X}^{T} X)}^{-1} {X}^{T} Y$ (hint: add a third column to $X$ from step 1)
+```{r}
+#add a third column to X that is squared
+designmatrix <- cbind(constant= rep(1, 32), mtcars$wt, (mtcars$wt^2))
+
+#estimate the quadratic beta using Ordinary Least Squares
+bhat_quadratic <- solve(t(designmatrix)%*%designmatrix)%*%t(designmatrix)%*%Y
+
+bhat_quadratic
+```
+
+Little note to self:
+When the x2 positive then the model is convex (happy) and when x2 is negative when the curve is concave (sad).
+
 3. compare your acquired $\hat{\beta}$ with the output of the corresponding quadratic model created using __lm__ (hint: use the function __I__, see details under help and the sub-section formula operators here: https://www.datacamp.com/community/tutorials/r-formula-tutorial)  
     i. create a plot that illustrates $Y$ and $\hat{Y}$ (if you are feeling ambitious, also include $\epsilon$ (hint: you can use the function __arrows__))  
+
+
 
 ## Exercise 2
 Compare the plotted quadratic fit to the linear fit  
