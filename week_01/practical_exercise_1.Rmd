@@ -13,7 +13,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load(dplyr, tidyverse)
+pacman::p_load(dplyr, tidyverse, patchwork)
 
 ```
 
@@ -244,18 +244,60 @@ bhat_quadratic <- solve(t(designmatrix)%*%designmatrix)%*%t(designmatrix)%*%Y
 bhat_quadratic
 ```
 
-Little note to self:
+*Little note to self*:
 When the x2 positive then the model is convex (happy) and when x2 is negative when the curve is concave (sad).
 
 3. compare your acquired $\hat{\beta}$ with the output of the corresponding quadratic model created using __lm__ (hint: use the function __I__, see details under help and the sub-section formula operators here: https://www.datacamp.com/community/tutorials/r-formula-tutorial)  
     i. create a plot that illustrates $Y$ and $\hat{Y}$ (if you are feeling ambitious, also include $\epsilon$ (hint: you can use the function __arrows__))  
 
+```{r}
+#making a lil dataframe with the data I need
+designmatrix_tibble <- tibble(constant= rep(1, 32), "x"= mtcars$wt, "x2" = (mtcars$wt^2), y=mtcars$mpg)
+
+#compare the quadratic beta-hat with model's beta-hat
+model1 <- lm(y~x + x2, data=designmatrix_tibble)
+summary(model1)#its the same beta values as our quadratic betas:)
+
+
+#estimating y-estimates from the quadratic model
+yhat_quadratic <- designmatrix%*%bhat_quadratic
+
+
+#plot for comparison of y and y-model-estimates
+mtcars %>% 
+  ggplot(aes(wt, mpg))+
+  geom_point(aes(y = yhat_quadratic), colour = "blue") +
+  geom_point(aes(y = Y), colour = "darkred")
+  
+```
 
 
 ## Exercise 2
 Compare the plotted quadratic fit to the linear fit  
+```{r}
 
-1. which seems better?  
+#linear fit
+linear<- mtcars %>% 
+  ggplot(aes(wt, mpg))+
+  geom_point(aes(y = yhat), colour = "orange") +
+  geom_point(aes(y = Y), colour = "darkred")
+
+#quadratic fit
+quadratic<- mtcars %>% 
+  ggplot(aes(wt, mpg))+
+  geom_point(aes(y = yhat_quadratic), colour = "blue") +
+  geom_point(aes(y = Y), colour = "darkred")
+
+linear/quadratic
+
+summary(model)
+summary(model1)
+
+```
+
+1. which seems better?
+From visual inspection the 
+
 2. calculate the sum of squared errors, (show the calculation based on $\epsilon$). Which fit has the lower sum?  
 3. now make a cubic fit ($y = {\beta}_{3} x^3 + {\beta}_{2} x^2 + {\beta}_{1} x + {\beta}_{0}$) and compare it to the quadratic fit  
     i. create a plot that illustrates $Y$ and $\hat{Y}$ for both the cubic and the quadratic fits (plot them in the same plot)  
