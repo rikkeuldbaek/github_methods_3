@@ -1,7 +1,7 @@
 ---
 title: "practical_exercise_1, Methods 3, 2021, autumn semester"
-author: '[FILL IN YOUR NAME]'
-date: "[FILL IN THE DATE]"
+author: 'Rikke Uldbæk'
+date: "20/9 2021"
 output: html_document
 ---
 
@@ -152,7 +152,6 @@ _[, 1]   mpg   Miles/(US) gallon
 [,11]	 carb	 Number of carburetors_  
 
 ```{r}
-
 head(mtcars)
 ```
 
@@ -258,10 +257,8 @@ designmatrix_tibble <- tibble(constant= rep(1, 32), "x"= mtcars$wt, "x2" = (mtca
 model1 <- lm(y~x + x2, data=designmatrix_tibble)
 summary(model1)#its the same beta values as our quadratic betas:)
 
-
 #estimating y-estimates from the quadratic model
 yhat_quadratic <- designmatrix%*%bhat_quadratic
-
 
 #plot for comparison of y and y-model-estimates
 mtcars %>% 
@@ -275,7 +272,6 @@ mtcars %>%
 ## Exercise 2
 Compare the plotted quadratic fit to the linear fit  
 ```{r}
-
 #linear fit
 linear<- mtcars %>% 
   ggplot(aes(wt, mpg))+
@@ -291,28 +287,102 @@ quadratic<- mtcars %>%
 linear/quadratic
 
 summary(model)
-summary(model1)
+summary(model1) #also this one has a better R^2 
 
 ```
-
 1. which seems better?
-From visual inspection the 
+From visual inspection the quadratic plot seems to have a better fit. 
+
 
 2. calculate the sum of squared errors, (show the calculation based on $\epsilon$). Which fit has the lower sum?  
+```{r}
+RSS_linear <- sum((Y-yhat)^2)
+RSS_linear # 278.3219 
+
+yhat
+RSS_quadratic <- sum((Y-yhat_quadratic)^2)
+RSS_quadratic  #203.7454
+
+```
+The quadratic model makes the lowest sum of RSS. 
+
 3. now make a cubic fit ($y = {\beta}_{3} x^3 + {\beta}_{2} x^2 + {\beta}_{1} x + {\beta}_{0}$) and compare it to the quadratic fit  
     i. create a plot that illustrates $Y$ and $\hat{Y}$ for both the cubic and the quadratic fits (plot them in the same plot)  
     ii. compare the sum of squared errors  
     iii. what's the estimated value of the "cubic" (${\beta}_3$) parameter? Comment on this!  
 4. bonus question: which summary statistic is the fitted value (_Intercept_ or ${\beta}_0$ in $y = {\beta}_0$) below identical to?
-```{r, echo=FALSE}
-lm(mpg ~ 1, data=mtcars)
+
+```{r}
+#add a four column to X that is squared
+designmatrix_2 <- cbind(constant= rep(1, 32), mtcars$wt, (mtcars$wt^2), (mtcars$wt^3))
+
+#estimate the quadratic beta using Ordinary Least Squares
+bhat_cubic <- solve(t(designmatrix_2)%*%designmatrix_2)%*%t(designmatrix_2)%*%Y
+
+#put it into a tibble 
+designmatrix_tibble2 <- tibble(constant= rep(1, 32), "x"= mtcars$wt, "x2" = (mtcars$wt^2),"x3"=(mtcars$wt^3), y=mtcars$mpg)
+
+#make a cubic model
+model2 <- lm(y~x + x2 + x3, data=designmatrix_tibble2)
+summary(model2)
+
+#generate y estimates from cubic model
+yhat_cubic <- designmatrix_2%*%bhat_cubic
+
+# ------ compare the cubic fit to quadratic fit visually -------# 
+
+#quadratic fit
+quadratic<- mtcars %>% 
+  ggplot(aes(wt, mpg))+
+  geom_point(aes(y = yhat_quadratic), colour = "blue") +
+  geom_point(aes(y = Y), colour = "darkred")
+
+#cubic fit
+cubic<- mtcars %>% 
+  ggplot(aes(wt, mpg))+
+  geom_point(aes(y = yhat_cubic), colour = "orange") +
+  geom_point(aes(y = Y), colour = "darkred")
+
+cubic/quadratic
+
+# ------ compare the cubic fit to quadratic fit by RSS-------# 
+
+RSS_quadratic <- sum((Y-yhat_quadratic)^2)
+RSS_quadratic  #203.7454
+
+RSS_cubic <- sum((Y-yhat_cubic)^2)
+RSS_cubic # 203.6699
+
+#The estimated value of the "cubic" (${\beta}_3$) parameter
+coef(model2) # the cubic  (${\beta}_3$) parameter is 0.04593618
+
 ```
+
+i. Visually the quadratic and cubic plot looks quite the same.
+ii. Looking at the RSS, the quadratic and cubic fit looks pretty much the same. 
+iii. The cubic  (${\beta}_3$) parameter is 0.04593618, which is really small, this means that it has very little effect on the fit, so it does not really contribute much to making a better fit. 
+
 ## Exercise 3
-Doing a logistic regression - estimating the probability that a car has automatic transmission (0) or manual transmission (1) based on its weight
+Doing a logistic regression - estimating the probability that a car has automatic transmission (0) or manual transmission (1) based on its weight. Use the variable "am"	 Transmission (0 = automatic, 1 = manual)  
 ```{r, eval=FALSE}
-data(mtcars)
-logistic.model <- glm(formula=..., data=..., family='binomial)
+#make the model
+model3 <- glm(am ~ wt, data=mtcars, family='binomial')
+summary(model3)
+
+
+#make a plot df from model
+plot_df <- broom::augment(model3, type.predict = "response")
+head(plot_df)
+
+#plotting the fitted values for the logistic model
+log_reg_plot <-
+  ggplot(plot_df, aes(x = wt)) +
+  geom_line(aes(y = .fitted), color = "blue") +
+  labs(x = "weight", y = "am") + geom_point(aes(y = am), alpha = 0.2);print(log_reg_plot)
+
+
 ```
+
 
 Probabilities live on the range $(0, 1)$ - using the so-called logit function as a "link-function" we can map these onto the range $(-\infty, \infty)$, i.e. the real numbers.  
   
@@ -321,11 +391,26 @@ It is helpful to define the logit function and its inverse function for the foll
 
 ```{r}
 logit <-     function(x) log(x / (1 - x))
+
 inv.logit <- function(x) exp(x) / (1 + exp(x))
+
 ```
 
 1. plot the fitted values for __logistic.model__:  
-    i. what is the relation between the __linear.predictors__ and the __fitted_values__ of the __logistic.model__ object?
+    i. what is the relation between the __linear.predictors__ $X \beta$ and the __fitted_values__ of the __logistic.model__ object?
+    -  ????????????????
+
+```{r}
+
+#log odds into probability for estimate of intercept  (0)
+boot::inv.logit(12.040) # = 0.9999941 == 0.99%
+
+#log odds into probability for estimate of going from 0 to 1
+boot::inv.logit(12.040 + (-4.024))  #=0.99967== 0.99%
+
+```
+    
+
 2. plot the logistic function, you've estimated based on your $\hat{\beta}$, (not just the fitted values). Use an _xlim_ of (0, 7)
     i. what's the interpretation of the estimated $\hat{\beta}_0$ (the _Intercept_)
     ii. calculate the estimated probability that the Pontiac Firebird has automatic transmission, given its weight
@@ -344,6 +429,13 @@ inv.logit <- function(x) exp(x) / (1 + exp(x))
     ii. check the details in the help of the AIC function - which of the models provide the better fit according to the AIC values and the residual deviance respectively?
     iii. in your own words, why might it be good to penalise a model like the quadratic model, we just fitted.
     
+    
+Hej Lau, det her kan jeg/vi ikke finde ud af :)) 
+  - Det kunne være rigtig rart med noget hjælp til dette /              gennemgang af opgaven. 
+  
+  kh studiegruppe 1 :)) 
+
+
 # Next time
 We are going to looking at extending our models with so called random effects. We need to install the package "lme4" for this. Run the code below or install it from your package manager (Linux)  
 ```{r, eval=FALSE}
