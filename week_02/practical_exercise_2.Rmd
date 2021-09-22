@@ -1,7 +1,7 @@
 ---
 title: "practical_exercise_2, Methods 3, 2021, autumn semester"
-author: '[FILL IN YOUR NAME]'
-date: "[FILL IN THE DATE]"
+author: 'Rikke Uldbæk'
+date: "22/9 2021"
 output: pdf_document
 ---
 
@@ -13,6 +13,12 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(tidyverse, stacker)
+
+setwd("~/Desktop/Cognitive Science/3rd semester/Methods 3/github_methods_3/week_02")
+
+
+
 ```
 
 # Assignment 1: Using mixed effects modelling to model hierarchical data

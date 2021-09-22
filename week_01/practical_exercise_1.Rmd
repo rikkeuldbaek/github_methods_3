@@ -362,6 +362,11 @@ i. Visually the quadratic and cubic plot looks quite the same.
 ii. Looking at the RSS, the quadratic and cubic fit looks pretty much the same. 
 iii. The cubic  (${\beta}_3$) parameter is 0.04593618, which is really small, this means that it has very little effect on the fit, so it does not really contribute much to making a better fit. 
 
+*Even though for example, in the exercises, making the model quadratic doesn't actually add extra information (by adding the squared value), but is it still useful because there are cases of non-linear relations in real data?*
+
+*- Lau: Yes, if the data at hands follows a quadratic distribution, it will be useful to model this. The point is that it won't add much if the data can mostly be explained as a linear relationship. So always assess whether or not it is useful to add more terms - informally spoken, only add terms that make a "big" difference in the amount of variance explained*
+
+
 ## Exercise 3
 Doing a logistic regression - estimating the probability that a car has automatic transmission (0) or manual transmission (1) based on its weight. Use the variable "am"	 Transmission (0 = automatic, 1 = manual)  
 ```{r, eval=FALSE}
