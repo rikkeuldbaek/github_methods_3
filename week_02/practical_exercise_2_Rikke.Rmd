@@ -13,7 +13,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load(tidyverse, patchwork, ggplot2)
+pacman::p_load(tidyverse, patchwork, ggplot2, lme4, stats)
 setwd("~/Desktop/Cognitive Science/3rd semester/Methods 3/github_methods_3/week_02")
 
 ```
@@ -26,8 +26,7 @@ The dataset has been shared on GitHub, so make sure that the csv-file is on your
 
 ```{r}
 politeness <- read.csv('politeness.csv') ## read in data
-
-attach(politeness) # attach means u don't need to do tidyverse piping, so you don't have to refer to the politeness dataset.
+attach(politeness)
 ```
 
 # Exercises and objectives
@@ -101,7 +100,7 @@ ls.str(politeness) #general information
 #####Total duration variable
 The total duration variable is a numeric variable representing... 
 
-The distribution of the variable is positively skewed (right-skewed distribution).
+The distribution of the variable is positively skewed (right-skewed distribution).The minimum value in the variable is 0.988 and the maximum value in the variable is 101.375, in addition to this the mean of the variable is 24.176.
 
 ```{r}
 #total duration variable plot
@@ -109,31 +108,168 @@ ggplot(politeness, aes(total_duration))+geom_density()
 
 #additional information
 ls.str(politeness) #general information
-
+summary(total_duration)
 ```
 
 #####F0mn variable
-F0mn represents the frequency in Hertz of the voice i.e the pitch in voice in hz. This variable is numeric and the distribution of the data is bimodal. 
+F0mn represents the frequency in Hertz of the voice i.e the pitch in voice in hz. This variable is numeric and the distribution of the data is bimodal. The minimum value in the variable is 80.8 hz and the maximum value in the variable is 415.8 hz, in addition to this the mean of the variable is 197.9 hz. 
 ```{r}
-#f0mn
+#f0mn variable plot
 ggplot(politeness, aes(f0mn))+geom_density()
 
-
-
+#additional information
+ls.str(politeness) #general information
+summary(f0mn)
 ```
 
-Hiss count variable
-```{r}
-#hiss count
+#####Hiss count variable
+The hiss count variable relates to the amount of loud "hissing" breath intake. This variable is an integer variable with a minimum value hissings of 0 and a maximum hissing value of 5. The distribution of the data is positively skewed (right-skewed distribution). 
 
+```{r}
+#hiss count variable plot
+ggplot(politeness, aes(hiss_count))+geom_density()
+
+#additional information:
+ls.str(politeness) #general information
+summary(hiss_count)
 ```
 
 
 2) Create a new data frame that just contains the subject _F1_ and run two linear models; one that expresses _f0mn_ as dependent on _scenario_ as an integer; and one that expresses _f0mn_ as dependent on _scenario_ encoded as a factor  
     i. Include the model matrices, $X$ from the General Linear Model, for these two models in your report and describe the different interpretations of _scenario_ that these entail
     ii. Which coding of _scenario_, as a factor or not, is more fitting?
+
+Model 1 - scenario as integer
+Model 1 expresses f0mn as dependent on scenario as an integer. When the "scenario" variable is integer, it is treated as numeric by R, meaning we would interpret the slope in the summary of the model as follows: per increment of scenario the pitch will go down by 6.886 hz. This is a faulty interpretation, because our model matrix of model 1 shows how we only have 1 linear level, which means we do not look at each scenario individually.
+
+(WHAT THE FUCK)
+
+Model 2 - scenario as factor
+Model 2 expresses f0mn as dependent on scenario encoded as a factor. When the "scenario" variable is factor, it is treated categorically by R, which enables us to interpret the output of the model 2 correctly as follows; going from scenario 1 to scenario 2 the pitch increases by 62.40 hz, going from scenario 2 to scenario 3 the pitch increases by 35.35 hz (ER DET HER RIGTIGT?? ELLER SKAL MAN MÅLE MED BASELINE HVER GANG?????????). The model matrix of model 2 shows how we have multiple levels, meaning that we can look at each scenario individually, and thereby investigate their meaning properly. 
+
+Thus, coding the "scenario" variable as factor provides the most accurate information. 
+
+(WHAT THE FUCK)
+
+```{r}
+#creating a data frame with only subject F1
+df_F1 <- politeness %>% 
+  filter(subject == "F1") %>% 
+  mutate(scenario_factor = as.factor(scenario))
+
+
+#model 1 with "f0mn" as y and "scenario" as x (INTEGER) 
+class(df_F1$scenario)# it's integer
+model_integer <- lm(f0mn~scenario, data=df_F1)
+summary(model_integer)
+
+model1_X <- model.matrix(model_integer)
+model1_X
+
+
+#model 2 with "f0mn" as y and "scenario" as x (FACTOR)
+class(df_F1$scenario_factor) #its' factor
+model_factor <- lm(f0mn~scenario_factor, data=df_F1)
+summary(model_factor)
+
+model2_X <- model.matrix(model_factor)
+model2_X
+
+
+#as concluded, coding "scenario" as factor makes most sense
+politeness$scenario <- as.factor(politeness$scenario)
+```
+  
+
 3) Make a plot that includes a subplot for each subject that has _scenario_ on the x-axis and _f0mn_ on the y-axis and where points are colour coded according to _attitude_
     i. Describe the differences between subjects
+    
+    
+```{r}
+#plot 
+politeness %>% ggplot(aes(x=scenario,y=f0mn, color= subject))+ geom_point()
+
+
+F1 <- politeness %>% 
+  filter(subject== "F1") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F1")
+
+F2 <- politeness %>% 
+  filter(subject== "F2") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F2")
+
+F3 <- politeness %>% 
+  filter(subject== "F3") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F3")
+ 
+F4 <- politeness %>% 
+  filter(subject== "F4") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F4")
+
+F5 <- politeness %>% 
+  filter(subject== "F5") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F5")
+
+F6 <- politeness %>% 
+  filter(subject== "F6") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F6")
+
+F7 <- politeness %>% 
+  filter(subject== "F7") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F7")
+
+F8 <- politeness %>% 
+  filter(subject== "F8") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F8")
+
+F9 <- politeness %>% 
+  filter(subject== "F9") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject F9")
+
+M1 <- politeness %>% 
+  filter(subject== "M1") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject M1")
+
+M2 <- politeness %>% 
+  filter(subject== "M2") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject M2")
+
+M3 <- politeness %>% 
+  filter(subject== "M3") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject M3")
+
+M4 <- politeness %>% 
+  filter(subject== "M4") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject M4")
+
+M5 <- politeness %>% 
+  filter(subject== "M5") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject M5")
+
+M6 <- politeness %>% 
+  filter(subject== "M6") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject M6")
+
+M7 <- politeness %>% 
+  filter(subject== "M7") %>% 
+  ggplot(aes(x=scenario,y=f0mn, color= attitude))+ geom_point()+ggtitle("Subject M7")
+
+
+M7
+
+ggplot(data=politeness, aes(x=scenario,y=f0mn, attitude)) +
+  geom_point() +
+  facet_grid(subject ~ .)
+
+politeness %>% ggplot(aes(x=scenario, y=f0mn))+
+  geom_point(aes(group=subject, color=attitude))+
+  stat_summary(fun.y=mean, na.rm=T, group=11, alpha=1, color='red', size=1.5, geom='line')+
+  theme_bw()+
+  labs(x='year', y='gross profits on assets',
+    color=NULL)+theme(legend.position = 'bottom')
+
+```
+
     
 ## Exercise 2  - comparison of models
 
@@ -152,7 +288,67 @@ example.formula <- formula(dep.variable ~ first.level.variable + (1 | second.lev
     iii. a two-level model that only has _subject_ as an intercept 
     iv. a two-level model that models intercepts for both _scenario_ and _subject_
     v. which of the models has the lowest residual standard deviation, also compare the Akaike Information Criterion `AIC`?
+      - The fourth model (model 4) has the lowest residual standard deviation of 30.65803. 
+      - The fourth model (model 4) has the lowest AIC value of 2092.482
     vi. which of the second-level effects explains the most variance?
+    
+```{r}
+#model 1 - single level model that models _f0mn_ as dependent on _gender_
+model1 <- lmer(f0mn ~ gender, data=politeness)
+summary(model1)
+sigma(model1)  #34.49784
+
+
+#model 2 - two-level model that adds a second level on top of i. where unique intercepts are modelled for each _scenario_
+model2 <- lmer(f0mn ~ gender+ (1|scenario), data=politeness)
+summary(model2)
+sigma(model2)  #38.448
+
+#model 3 - two-level model that only has _subject_ as an intercept 
+model3 <- lmer(f0mn ~ gender+ (1|subject), data=politeness)
+summary(model3)
+sigma(model3)  #32.04287
+
+#model 4 - two-level model that models intercepts for both scenario and subject
+model4 <- lmer(f0mn ~ gender + (1|subject) + (1|scenario), data=politeness)
+summary(model4)
+sigma(model4)  #30.65803 LOWEST
+
+
+#comparing AIC values
+AIC(model1, model2, model3, model4)
+
+
+
+#############HVORDAN FANDEN REGNER MAN R2 PÅ MULTIPLE REGRESSION MED RANDOM EFFECTS????????
+
+
+#calculating R^2  model 2
+summary(model2)
+
+Y <- f0mn
+X_model2 <- model.matrix(model2)
+bhat_model2 <- solve(t(X_model2) %*% X_model2) %*% t(X_model2) %*% Y
+X_model2
+Y
+
+RSS <- sum((Y-yhat)^2)
+SSTO <- sum((Y-yhat)^2) #sum(yi-B0)^2 bog # sum(yi-y mean)^2
+
+#R^2 RSS/SSTO
+
+summary(model1)$r.squared
+summary(model2)$adj.r.squared
+summary(model3)$adj.r.squared
+summary(model4)$adj.r.squared
+
+summary(model2)$r.squared 
+
+summary(modello)$r.squared 
+
+
+```
+
 2) Why is our single-level model bad?
     i. create a new data frame that has three variables, _subject_, _gender_ and _f0mn_, where _f0mn_ is the average of all responses of each subject, i.e. averaging across _attitude_ and_scenario_
     ii. build a single-level model that models _f0mn_ as dependent on _gender_ using this new dataset
