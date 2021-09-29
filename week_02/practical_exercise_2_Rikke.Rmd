@@ -187,7 +187,9 @@ The main difference between each subject is the pitch of voice in hertz. The sub
     
 ```{r}
 #plot 
-subplot <- ggplot(data = politeness, aes(x = scenario, y = f0mn, color = attitude)) + geom_point()+ facet_wrap(~subject);print(subplot)
+subplot <- ggplot(data = politeness, aes(x = scenario, y = f0mn, color = attitude)) +
+  geom_point()+
+  facet_wrap(~subject);print(subplot)
 
 ```
 
@@ -248,13 +250,11 @@ MuMIn::r.squaredGLMM(model4) #R2c = 0.816289
     
 ###Why is our single-level model bad?
 
-When comparing the Normal Q-Q-plots for the new single-level model and the old single-level model neither of them see to fulfill the assumptions of normally distributed residuals completely, as the dots deviate a little from the line in both plots. Especially the Normal Q-Q-plots for the old single-level model seems to show signs of pattern with its bending end. 
+When comparing the Normal Q-Q-plots for the new single-level model and the old single-level model neither of them see to fulfill the assumptions of normally distributed residuals completely, as the dots deviate a little from the line in both plots. Especially the Normal Q-Q-plots for the old single-level model seems to show signs of pattern with its bending end, which indicates a right skewed tail. 
 
-Normality of residuals is not the only violation of assumptions. Likewise, does the data-set contain repeated measures per participant, thus violating the assumption of independence. A mixed effects model is therefore the appropriate model to use, and not a single-level linear model. 
+Normality of residuals is not the only violation of assumptions. Likewise, does the data-set contain repeated measures per participant, thus violating the assumption of independence. A mixed effects model is therefore the appropriate model to use, and not a single-level linear model.
 
-Both a residual plot with residuals VS fitted and a Q-Q-plot of the model were assessed. The residual plot of the multilevel model with two intercepts (model 4) looks fine, as its residuals are distributed as a cloud of dots. The Q-Q-plot for the residuals of model 4, looks a little better than model 1 and the single-level model, but still has a right skewed tail. 
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!WHATTTTT!!!!!!!!!!!!!!!!!!!!!!
+Both a residual plot with residuals VS fitted and a Q-Q-plot of the model were assessed. The residual plot of the multilevel model with two intercepts (model 4) looks fine, as its residuals are distributed as a cloud of dots. The Q-Q-plot for the residuals of model 4, looks a little better than model 1 and the single-level model, but still has a right skewed tail. This violation of normality of residuals can be accepted since linear models are relatively robust against violations of the assumptions of normality. This model does not violate the assumption of independence, which is more important. 
 
 
 ```{r}
@@ -312,9 +312,8 @@ subplot2 <- ggplot( politeness, aes(x = scenario, y = f0mn, color = attitude)) +
 
 ###Model with interaction
 
-The interaction in model 6, indicates that Korean men's pitch when they are polite are higher than Korean women's pitch when they are polite. Though, none of the effects are significant, thus reaching a conclusion is not possible. 
+"Attitudepol" indicates that the pitch generally decreases with -15.646 hz when going from informal to polite, but the interaction effect (gender*attitude) shows that for Males the pitch in decreases with LESS than for Females i.e 5,781 hz less in the polite condition. Thus, Korean men's pitch when they are polite are higher than Korean women's pitch when they are polite, in relation to them selves (as we have modelled indvidual intercepts for each subject). So the change in pitch is lower for Males than for Females in the polite condition. 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!WHATTTTT!!!!!!!!!!!!!!!!!!!!!!
 
 ```{r}
 #model 5 with attitude as a main effect besides gender
@@ -324,6 +323,8 @@ summary(model5)
 #model 6 with an interaction between attitude and gender
 model6 <- lmer(f0mn ~ gender + attitude+ gender*attitude + (1|subject) + (1|scenario), data=politeness)
 summary(model6)
+
+fixef(model6)
 
 ```
   
@@ -379,9 +380,14 @@ MuMIn::r.squaredGLMM(model6) #R2c = 0.8251343
 Based on the previous analysis of the data and modeling, the best model would be model 6, f0mn ~ gender + attitude+ gender*attitude + (1|subject) + (1|scenario).
 The variables used in the model are; f0mn, gender, attitude, subject, and scenario. "f0mn" represents the pitch of voice in hertz, "gender" represents which gender each subject identifies as (Female or Male), "attitude" represents two types of conditions for each trial (Informal or Polite), "subject" represents each subject's individual participant ID, and "scenario" represents 7 different trials, each with 2 different conditions, hence 14 rows per subject. 
 
-The summary output of model 6 shows how going from female (with an intercept of 254.193 hz) to male, the pitch of voice decreases by 117.983 hz. When going from the attitude "informal" to "polite" the pitch of voice decreases by 15.646 hz. Lastly, when going from ....... !!!!!!INTERACTION!!!!!!!!!!
+The summary output of model 6 shows how going from female (with an intercept of 254.193 hz) to male, the pitch of voice decreases by 117.983 hz. When going from the attitude "informal" to "polite" the pitch of voice decreases by 15.646 hz.
+      - Females in informal attitude condition has a pitch of 254.193 (intercept)
+      - Females in polite attitude condition has a pitch of 238.547 i.e. (254.193-15.646). 
+      - Males in informal attitude condition has a pitch of 136.21 hz i.e. (254.193-117.983)
+      - Males in polite attitude condition has a pitch of 120.564 hz i.e. (254.193-(-117.983-15.646))
+      
+According to the interaction effect, males pitch decreases with LESS than for Females i.e 5,781 hz less in the polite condition. Thus, Korean men's pitch when they are polite are higher than Korean women's pitch when they are polite, in relation to them selves (as we have modelled indvidual intercepts for each subject). So the change in pitch is lower for Males than for Females in the polite condition.
 
-However, we cannot conclude anything, since none of the effects are significant. 
 
 ##### Motivation for including seperate intercepts for subject and scenarios
 It makes sense to include separate intercepts for the variables "subject" and "scenario", since we then assume that each subject and scenario has different baselines - a different average effect in pitch per subject and scenario. By making separate intercepts, we account for individual differences across subject and scenario. 
@@ -390,26 +396,9 @@ It makes sense to include separate intercepts for the variables "subject" and "s
 This model has a sigma = 29.16333, an AIC = 2180.623, and a R2c = 0.8251343. The model has a slightly better AIC value than the other models, but a slightly worse sigma and R2c than model 5. 
 
 ##### Q-Q-plot of model
-When comparing a Q-Q-plot from model 6 and Q-Q-plot from model 5, the values seem to fit the line slightly better for model 6. 
+When comparing a Q-Q-plot from model 6 and Q-Q-plot from model 5, the values seem to fit the line slightly better for model 6, but it is still has a right skewed tail. 
 
-However, it must be stated, than none of the effects were statistically significant, thus making the model ineffectual. 
-
-
-
-interpreting the interaction:
-Fixed effects:
-                    Estimate Std. Error t value
-(Intercept)          254.193      9.654  26.330
-genderM             -117.983     13.633  -8.654
-attitudepol          -15.646      5.196  -3.011
-genderM:attitudepol    5.781      7.856   0.736
-
-(Intercept)  kvinde/informal =  254 hz
-genderM /når vi går fra kvinde til mand = falder pitch med 117 hz
-attitudepol, når vi går fra informal til polite = falder pitch med 15 hz
-genderM:attitudepol: generelt falder pitch med 15 hz fra informal til polite, men for mænd falder den 5 hz mindre end for kvinder = (-15.646 - 5,781) = -10 agtig for mænd, mens for kvinder falder den -15.646
-
-
+Conceptually model 6 would make sense, as one could argue that pitch would get affected depending on both gender and attitude (the interaction). 
   
 ```{r}
 #model 6 with an interaction between attitude and gender
@@ -427,6 +416,3 @@ qqnorm(resid(model4))
 qqline(resid(model4))
 
 ```
-
-
-
