@@ -14,7 +14,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 setwd("~/Desktop/Cognitive Science/3rd semester/Methods 3/github_methods_3/week_03")
-pacman::p_load(tidyverse,dplyr, data.table, vroom, ggplot2, readbulk, lme4,MuMIn)
+pacman::p_load(tidyverse,dplyr, data.table, vroom, ggplot2, readbulk, lme4, rstanarm, MuMIn)
 ```
 
 # Exercises and objectives
@@ -63,8 +63,6 @@ data$trial.type <- as.factor(data$trial.type)
 n <- nrow(data)  # Number of rows in total
 (percent_trial.type<- table(data$trial.type)/n * 100) #generating percentages of trial.type
 barplot(percent_trial.type,ylim=c(0,100), ylab="percent",main="Barplot of trial.type")
-
-
 ```
 
 ##### pas
@@ -148,7 +146,7 @@ summary(rt.obj)
 The character variable "obj.resp" represents the key actually pressed e for even and o for odd.This variable is currently a character variable and will be classified into a factor for analytic purposes.
 ```{r}
 class(obj.resp)
-data$cue <- as.factor(data$cue)
+data$cue <- as.factor(data$obj.resp) 
 ```
 
 ##### subject
@@ -181,14 +179,12 @@ Lau, I don't really get this exercise. I'm not sure you mean either complete poo
 ### iii.  Complete pooling/ No pooling (?)
 The fits looks quite poor, because the fitted values does not resemble the sigmoid function.
 
-
-
 ```{r}
 #iii. 
 #----complete pooling model------#
 # Creating df only containing staircase trials
 staircase <- data %>% 
-  subset(data$trial.type == "staircase")
+  subset(trial.type == "staircase")
 
 # Complete pooling model
 complete_pool_model <- glm(correct ~ target.contrast, data = staircase, family=binomial)
@@ -204,7 +200,6 @@ ggplot(staircase, (aes(x = target.contrast, y = correct, color= subject)))+
 #----no pooling model------#
 # No pooling with interaction effect with subject
 no_pooling_model<- glm(correct ~ target.contrast+ target.contrast*subject, data = staircase, family="binomial")
-
 
 # No pooling with interaction effect with subject PLOT
 ggplot(staircase, (aes(x = target.contrast, y = correct, color=subject)))+ 
@@ -367,7 +362,6 @@ i.
 The partial pooling model 4 (log(rt.obj) ~ task + (1 + task | subject) + (1 | trial)), has the lowest sigma as well as AIC value. This is the model that predicts objective response times (rt.obj) dependent on task (fixed effects), modelling a random intercepts for subjects and trial as well as random slopes for task. Random intercepts were modeled for subject as one would expect individual baseline performance differences among different participants. Trial as also been modelled as random intercepts as you would expect different trials to vary in difficulty.
 
 
-
 ii. 
 The estimates for quadruplet and singles are negative, which indicates that participants have a faster objective response time compared to the intercept (pair). When comparing the tasks "quadruplet" and "singles" the people are generally faster to the "single" task. The effect is, however, strongest from changing from *pairs* to *singles* (the respodents generally complete the singles tasks faster, relative to the quadruplet tasks).
   
@@ -400,7 +394,6 @@ pseudo_r2 <- c(0.2629, 0.0360, 0.2253, 0.2750, 0.2371);print(pseudo_r2)
   
 #printing the best model
 summary(partial4)
-
 ```
 
 
@@ -430,6 +423,7 @@ np_model_4 <- lmer(rt.obj ~task +pas + pas*task +(1|subject)+(1|trial)+ (1|task)
 
 #cheking out why np_model_4 has a singular fit
 print(VarCorr(np_model_4), comp='Variance') # random effect task variance = 0
+# when a random effect task variance =  0 (er det fordi den random effect ikke forklarer noget som helst)
 
 ```
 
@@ -444,9 +438,9 @@ print(VarCorr(np_model_4), comp='Variance') # random effect task variance = 0
 data_count <- data %>% 
   group_by(subject, task, pas) %>% 
   summarise("count" = n())
+
+ls.str(data_count)
 ```        
-
-
 
 
 2) Now fit a multilevel model that models a unique "slope" for _pas_ for each _subject_ with the interaction between _pas_ and _task_ and their main effects being modelled  
@@ -492,7 +486,6 @@ countmodel1 <- glmer(count~pas*task + (1+pas|subject), data = data_count, family
 
 summary(countmodel1)
 
-
 # Model with only the main effects of pas and task
 countmodel2 <- glmer(count ~ pas + task + (1 + pas|subject), data = data_count, family = "poisson", control = glmerControl(optimizer="bobyqa")) 
 
@@ -501,10 +494,8 @@ countmodel2 <- glmer(count ~ pas + task + (1 + pas|subject), data = data_count, 
 AIC(countmodel1,countmodel2)
 
 #comparing by R^2 
-MuMIn::r.squaredGLMM(countmodel1) 
+MuMIn::r.squaredGLMM(countmodel1)
 MuMIn::r.squaredGLMM(countmodel2) 
-
-
 
 #plot for report
 data_count$task <- relevel(data_count$task, ref = "singles")
@@ -544,7 +535,7 @@ data.count_four %>%
 #### 3. i-v. Modelling "correct"
 
 i.
-The output of the model indicates that "task" is significant for all levels but "quaduplet", therefore task does explain performance for "singles" and "pairs". Though, inspecting the coefficients of the model, it makes great sense that "quadruplet" is negative, which indicates more a decreese in "correct" answers, i.e when complexity increases the amount correct answer decreases. 
+The output of the model indicates that "task" is significant for all levels but "quaduplet", therefore task does explain performance for "singles" and "pairs". Though, inspecting the coefficients of the model, it makes great sense that "quadruplet" is negative, which indicates more a decrease in "correct" answers, i.e when complexity increases the amount correct answer decreases. Calculated probabilities state: 75% probability of getting 1 (correct) in pair task, 73% probability of getting 1 (correct) in quadruplet task, 78% probability of getting 1 (correct) in single task. Meaning, there is less probability of being correct in the quadruplet task. Though note, these probabilities are still quite similar, so drawing any conclusion from them would probably be faulty. 
 
 ii.
 When adding "pas" as a main effect on top of "task", "task" loses its significance and "pas" gains it, indicating "pas" could be a better predictor.
@@ -565,6 +556,10 @@ model_correct1 <- glmer(correct~task + (1|subject), data= experiment, family = b
 #see summary again to see log odds
 summary(model_correct1)
 
+#probability getting each task
+pair <- invlogit(1.11896);print(pair)
+quar <- invlogit(1.11896-0.07496);print(quar)
+single <- invlogit(1.118961+0.16603);print(single)
 
 #add _pas_ as a main effect on top of _task_ - what are the consequences of that?  
 model_correct2 <- glmer(correct~task +pas + (1|subject), data= experiment, family = binomial)
@@ -584,11 +579,9 @@ summary(model_correct4)
 MuMIn::r.squaredGLMM(model_correct1)# R2c = 0.10167098
 MuMIn::r.squaredGLMM(model_correct2) # R2c = 0.3018983
 MuMIn::r.squaredGLMM(model_correct3) # R2c = 0.3015883
-MuMIn::r.squaredGLMM(model_correct4) # R2c = 0.0.3031205 #best
+MuMIn::r.squaredGLMM(model_correct4) # R2c = 0.3031205 #best
 
 aic<- AIC(model_correct1, model_correct2, model_correct3, model_correct4);print(aic)
-
-
 ```
 
 
