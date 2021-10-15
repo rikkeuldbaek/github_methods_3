@@ -15,7 +15,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 
 setwd("~/Desktop/Cognitive Science/3rd semester/Methods 3/github_methods_3/week_05")
-pacman::p_load(tidyverse,dplyr, data.table, vroom, ggplot2, readbulk, lme4, rstanarm, MuMIn)
+pacman::p_load(tidyverse,dplyr, data.table, vroom, ggplot2, readbulk, lme4, rstanarm, MuMIn, multcomp)
 
 ```
 
@@ -99,7 +99,7 @@ See chunk
 apply both functions to the pooling model you just created. Make sure that the log-likelihood matches what is returned from the _logLik_ function for the pooled model.Does the likelihood-function return a value that is surprising? 
 Why is the log-likelihood preferable when working with computers with limited precision?  
 
-The output of the loglik-function matches my log-likelihood function, they are both -10723. Considering the size of the data set, this value is not so surprising, because the likelihood for observing correct (1) is fairly small (and the loglik is super small too). *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+The output of the loglik-function matches my log-likelihood function, they are both -10865.25. Considering the size of the data set, this value is not so surprising, because the likelihood for observing correct (1) is fairly small (and the loglik is super small too). *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
 When using log-likelihood function we avoid getting really small numbers (eg. 10.000's of 0's in a decimal number), so doing this, makes it easier for computers with limited precision to cope with the numbers. *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
@@ -107,11 +107,11 @@ When using log-likelihood function we avoid getting really small numbers (eg. 10
 ### iv. log-likelihood and partial pooling
 now show that the log-likelihood is a little off when applied to the partial pooling model - (the likelihood function is different for the multilevel function - see section 2.1 of https://www.researchgate.net/profile/Douglas-Bates/publication/2753537_Computational_Methods_for_Multilevel_Modelling/links/00b4953b4108d73427000000/Computational-Methods-for-Multilevel-Modelling.pdf if you are interested)  
 
-From the comparison of my loglikelihood-function and the logLik-function it is evident that it's a little off, because the values are not the same. LogLik function when applied on the partial pooling model = -10476.26, and when my loglikelihood function is applied to the partial pooling model = -10419.41. 
+From the comparison of my loglikelihood-function and the logLik-function it is evident that it's a little off, because the values are not the same. LogLik function when applied on the partial pooling model = -10622.03 (df=3), and when my loglikelihood function is applied to the partial pooling model = -10565.53. 
 
 
 ```{r}
-#transform used variables
+#transform used variables (in order to make code run)
 df$correct <- as.numeric(df$correct)
 
 #logistic regression with _correct_ as the dependent variable and _target.frames_ as the independent variable
@@ -138,21 +138,23 @@ loglikelihood <- function(model, y){
   return(sum(y*log(p)+(1-y)*log(1-p)))
          }
 
-loglikelihood(complete_pool_model, df$correct) # = -10723 
+loglikelihood(complete_pool_model, df$correct) # = -10865.25 
 
 #comparing with the logLike-function on complete pooling model
-logLik(complete_pool_model) # = -10723 (df=6)
+logLik(complete_pool_model) # = -10865.25 (df=2)
 
 
 #using the logLike-function and my log-likelihood-function for partial pooling model
-logLik(partial_pool_model) # = -10476.26 (df=7)
-loglikelihood(partial_pool_model, df$correct) # = -10419.41
+logLik(partial_pool_model) # = -10622.03 (df=3)
+loglikelihood(partial_pool_model, df$correct) # = -10565.53
 
 ```
 
 
 ## Exercise 5.2
 2) Use log-likelihood ratio tests to argue for the addition of predictor variables, start from the null model, `glm(correct ~ 1, 'binomial', data)`, then add subject-level intercepts, then add a group-level effect of _target.frames_ and finally add subject-level slopes for _target.frames_. Also assess whether or not a correlation between the subject-level slopes and the subject-level intercepts should be included.
+
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
 *Group-level effect is another word for fixed effect or first-level* -lau
 
@@ -161,64 +163,150 @@ Write a short methods section and a results section where you indicate which mod
     ii. also include in the results section whether the fit didn't look good for any of the subjects. If so, identify those subjects in the report, and judge (no statistical test) whether their performance (accuracy) differed from that of the other subjects. Was their performance better than chance? (Use a statistical test this time) (50 %)  
 
 
+I did not make `xlim=c(0, 8)`, since the target frames range from 1-6. 
+
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+
+
+```{r}
+#Use log-likelihood ratio tests to argue for the addition of predictor variables
+nullmodel <-  glm(correct ~ 1, data=df, family=binomial(link = 'logit'))
+model1 <- glmer(correct ~ 1 + (1|subject), data=df,family=binomial(link = 'logit'))
+model2 <- glmer(correct ~ target.frames + (1|subject), data=df, family=binomial(link = 'logit'))
+model3 <- glmer(correct ~ target.frames + (1+target.frames|subject), data=df, family=binomial(link = 'logit'))
+model4 <- glmer(correct ~ target.frames + (1+target.frames||subject), data=df, family=binomial(link = 'logit')) # no correlation model 
+
+#Anova :)) --> cuz it gives the loglikelihood too 
+anova(model1, model2,model3, model4, nullmodel)
+
+
+#Using the log-likelihood ratio test for correlation between the subject-level slopes and the subject-level intercepts
+logLik(model4) # -10460.29 (df=4)
+logLik(model3) # -10448.83 (df=5)
+
+
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+
+
+#plot of the estimated group-level function with `xlim=c(0, 8)` that includes the estimated subject-specific functions. 
+#lav plot hvor vi sammenligner nullmodel med valgte model
+
+df %>% 
+  ggplot() +
+   geom_smooth(aes(x = target.frames, y = fitted(model3), color = "Partial Pooled model")) + 
+   geom_smooth(aes(x = target.frames, y = fitted(nullmodel), color = "Complete Pooled model")) +
+   facet_wrap( ~ subject) + 
+   labs(title = "Estimated group-level function pr. subject") +
+   labs(x = "x = target.frames (1:6)", y = "y = estimated functions (subject level)")
+
+## dette skal i princippet være model 3, men den kan ikke run for mig
+```
+
+
 ## Exercise 5.3
 3) Now add _pas_ to the group-level effects - if a log-likelihood ratio test justifies this, also add the interaction between _pas_ and _target.frames_ and check whether a log-likelihood ratio test justifies this  
 ### i. 
 If your model doesn't converge, try a different optimizer  
 
+model 6 is great :)), better loglik and better AIC. 
+
 ### ii.
 Plot the estimated group-level functions over `xlim=c(0, 8)` for each of the four PAS-ratings - add this plot to your report (see: 5.2.i) and add a description of your chosen model. Describe how _pas_ affects accuracy together with target duration if at all. Also comment on the estimated functions' behaviour at target.frame=0 - is that behaviour reasonable?  
 
+I did not make `xlim=c(0, 8)`, since the target frames range from 1-6. 
+
 
 ```{r}
-#Use log-likelihood ratio tests to argue for the addition of predictor variables
+#adding pas as a fixed effect
+model5 <- glmer(correct ~ target.frames+pas + (1+target.frames|subject), data=df, family=binomial(link = 'logit'), control = glmerControl(optimizer="bobyqa")) #adding pas as a fixed effect
 
-nullmodel <-  glm(correct ~ 1, data=df, family=binomial(link = 'logit'))
-model1 <- glm(correct ~ 1 + (1|subject), data=df,family=binomial(link = 'logit'))
-model2 <- glm(correct ~ target.frames + (1|subject), data=df, family=binomial(link = 'logit'))
-model3 <- glm(correct ~ target.frames + (1|subject)+ (subject|target.frames), data=df, family=binomial(link = 'logit'))
-ls.str(df)
+model6 <- glmer(correct ~ target.frames+pas+ target.frames:pas+ (1+target.frames|subject), data=df, family=binomial(link = 'logit'), control = glmerControl(optimizer="bobyqa")) # adding pas and interaction between pas and target.frames
 
-countmodel1 <- glmer(count~pas*task + (1+pas|subject), data = data_count, family = poisson, control = glmerControl(optimizer="bobyqa")) 
+anova(model5, model6) #model 6's rocks /compared to model5
 
-unique(df$subject)
-df$subject <- as.factor(df$subject)
+#Plot the estimated group-level functions over `xlim=c(0, 8)` for each of the four PAS-ratings
 
-#Using the log-likelihood ratio test for correlation between the subject-level slopes and the subject-level intercepts
-loglik()
-
-2) Use log-likelihood ratio tests to argue for the addition of predictor variables, start from the null model, `glm(correct ~ 1, 'binomial', data)`, then add subject-level intercepts, then add a group-level effect of _target.frames_ and finally add subject-level slopes for _target.frames_. Also assess whether or not a correlation between the subject-level slopes and the subject-level intercepts should be included.
+df %>% 
+  ggplot()+ 
+  geom_point((aes(x = target.frames, y = fitted(model6), color=pas)))+
+  facet_wrap(.~pas)+ 
+  labs(title = "Estimated accurary dependent on target duration and PAS")+
+  labs(x = "Target duration (target.frames)", y = "Estimated group-level function")
 
 ```
 
 
-
-
 # EXERCISE 6 - Test linear hypotheses
 
-In this section we are going to test different hypotheses. We assume that we have already proved that more objective evidence (longer duration of stimuli) is sufficient to increase accuracy in and of itself and that more subjective evidence (higher PAS ratings) is also sufficient to increase accuracy in and of itself.  
+In this section we are going to test different hypotheses. We assume that we have already proved that more objective evidence (longer duration of stimuli) is sufficient to increase accuracy in and of itself and that more subjective evidence *(higher PAS ratings) is also sufficient to increase accuracy in and of itself*.  
 We want to test a hypothesis for each of the three neighbouring differences in PAS, i.e. the difference between 2 and 1, the difference between 3 and 2 and the difference between 4 and 3. More specifically, we want to test the hypothesis that accuracy increases faster with objective evidence if subjective evidence is higher at the same time, i.e. we want to test for an interaction.  
 
+## Exercise 6.1
 1) Fit a model based on the following formula: `correct ~ pas * target.frames + (target.frames | subject))`
-    i. First, use `summary` (yes, you are allowed to!) to argue that accuracy increases faster with objective evidence for PAS 2 than for PAS 1. 
+
+
+### i. 
+First, use `summary` (yes, you are allowed to!) to argue that accuracy increases faster with objective evidence for PAS 2 than for PAS 1. 
+
+plz see the tibble :)))))
+
+```{r}
+#Fit a model based on the following formula: `correct ~ pas * target.frames + (target.frames | subject))`
+model7 <- glmer(correct~pas*target.frames+ (target.frames|subject), data= df, binomial(link = 'logit'))
+
+summary(model7)
+
+# creating a table showing the percentile increase in accuracy for every fixed effect and interactions
+estimates <- c(coef(summary(model7))[1:8])
+increase_in_prob <- c(invlogit(estimates))
+estimates_text <- c("intercept", "target.frames", "pas2", "pas3", "pas4", "target.frames:pas2", "target.frames:pas3", "target.frames:pas4")
+as_tibble(cbind(estimates_text, increase_in_prob)) #comment on these :))
+
+```
+    
+
+## Exercise 6.2
 2) `summary` won't allow you to test whether accuracy increases faster with objective evidence for PAS 3 than for PAS 2 (unless you use `relevel`, which you are not allowed to in this exercise). Instead, we'll be using the function `glht` from the `multcomp` package
-    i. To redo the test in 6.1.i, you can create a _contrast_ vector. This vector will have the length of the number of estimated group-level effects and any specific contrast you can think of can be specified using this. For redoing the test from 6.1.i, the code snippet below will do
-    ii. Now test the hypothesis that accuracy increases faster with objective evidence for PAS 3 than for PAS 2.
-    iii. Also test the hypothesis that accuracy increases faster with objective evidence for PAS 4 than for PAS 3
-3) Finally, test that whether the difference between PAS 2 and 1 (tested in 6.1.i) is greater than the difference between PAS 4 and 3 (tested in 6.2.iii)
+
+
+### i. 
+To redo the test in 6.1.i, you can create a _contrast_ vector. This vector will have the length of the number of estimated group-level effects and any specific contrast you can think of can be specified using this. For redoing the test from 6.1.i, the code snippet below will do
+
+### ii.
+Now test the hypothesis that accuracy increases faster with objective evidence for PAS 3 than for PAS 2.
+
+### iii.
+Also test the hypothesis that accuracy increases faster with objective evidence for PAS 4 than for PAS 3
 
 ### Snippet for 6.2.i
 ```{r, eval=FALSE}
 ## testing whether PAS 2 is different from PAS 1
 contrast.vector <- matrix(c(0, 0, 0, 0, 0, 1, 0, 0), nrow=1)
-gh <- glht(pas.intact.tf.ranslopeint.with.corr, contrast.vector)
+gh <- glht(model7, contrast.vector)
 print(summary(gh))
+
+#EXTRA - for my own understanding:
+#forklaring af hvorfor contrast.vector 
+coef(summary(model7))  # dette specifikke 1-tal står er fordi det er acurracy change fra intercept (pas 1) til pas2:target.frames (pas 2, med interaction)
+contrast.vector <- matrix(c(0, 0, 0, 0, 0, 1, 0, 0), nrow=1)
+
+
 ## as another example, we could also test whether there is a difference in
 ## intercepts between PAS 2 and PAS 3
 contrast.vector <- matrix(c(0, -1, 1, 0, 0, 0, 0, 0), nrow=1)
 gh <- glht(pas.intact.tf.ranslopeint.with.corr, contrast.vector)
 print(summary(gh))
+
+#EXTRA - for my own understanding:
+#forklaring af hvorfor contrast.vector 
+coef(summary(model7))  # dette specifikke 1-tal og -1-tal står er fordi det er acurracy change fra intercept (pas 1) til pas2:target.frames (pas 2, med interaction)
+contrast.vector <- matrix(c(0, -1, 1, 0, 0, 0, 0, 0), nrow=1)
 ```
+
+
+## Exercise 6.3
+3) Finally, test that whether the difference between PAS 2 and 1 (tested in 6.1.i) is greater than the difference between PAS 4 and 3 (tested in 6.2.iii)
+
 
 # EXERCISE 7 - Estimate psychometric functions for the Perceptual Awareness Scale and evaluate them  
 
