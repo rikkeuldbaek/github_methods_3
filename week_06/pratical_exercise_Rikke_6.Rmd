@@ -192,7 +192,7 @@ plt.plot(x, y, 'o')#create basic scatterplot
 plt.plot(x, bhat[1]*x+bhat[0])#add linear regression line to scatterplot 
 plt.plot(x, yhat, 'o', color='red')#use green as color for individual points
 plt.xlabel('x')
-plt.title('MY first linear regression plot wehuu')
+plt.title('MY first linear regression plot wehuuuu')
 plt.legend(['regression line', 'predicted values'])
 plt.show()
 
@@ -248,10 +248,53 @@ $bias(\hat{f}(x_0)) = E[\hat{f}(x_0)] - f(x_0)$
     i. generate data, $y_{true}$, based on an input range of [0, 6] with a spacing of 0.1. Call this $x$
     ii. add normally distributed noise to $y_{true}$ with $\sigma=5$ (set a seed to 7 `np.random.seed(7)`) and call it $y_{noise}$
     iii. plot the true function and the generated points  
-2) Fit a linear regression using `LinearRegression` from `sklearn.linear_model` based on $y_{noise}$ and $x$ (see code below)  
+    
+```{r}
+#load packages
+pacman::p_load(tidyverse, dplyr)
+
+#create a function that squares its input
+square_fun <- function(x){
+  return(x^2)
+}
+
+square_fun(4) # 16
+square_fun(5) # 25
+
+
+#set seed
+set.seed(7)
+
+# i. generate data, ytrue, based on an input range of [0, 6] with a spacing of 0.1 
+x <- seq(0,6,0.1)
+
+
+# ii. add normally distributed noise to ytrue with σ = 5 (set a seed to 7 np.random.seed(7)) and call it y_noise
+y_true <- rnorm(10, sd=5)
+
+# iii. plot the true function and the generated points
+
+ggplot( aes(x= square_fun(x), y=true))+geom_point()+geom_line()
+
+```
+
+
+2) Fit a linear regression using `LinearRegression` from `sklearn.linear_model` based on $y_{noise}$ and $x$ (see code below). 
     i. plot the fitted line (see the `.intercept_` and `.coef_` attributes of the `regressor` object) on top of the plot (from 2.1.iii)
     ii. now run the code associated with Exercise 2.2.ii - what does X_quadratic amount to?
     iii. do a quadratic and a fifth order fit as well and plot them (on top of the plot from 2.2.i)
+    
+```{r}
+# i. plot the fitted line (see the `.intercept_` and `.coef_` attributes of the `regressor` object) on top of the plot 
+
+
+
+# ii. now run the code associated with Exercise 2.2.ii - what does X_quadratic amount to?
+
+# iii. do a quadratic and a fifth order fit as well and plot them (on top of the plot from 2.2.i)
+
+```
+
 3) Simulate 100 samples, each with sample size `len(x)` with $\sigma=5$ normally distributed noise added on top of the true function  
     i. do linear, quadratic and fifth-order fits for each of the 100 samples  
     ii create a __new__ figure, `plt.figure`, and plot the linear and the quadratic fits (colour them appropriately); highlight the true value for $x_0=3$. From the graphics alone, judge which fit has the highest bias and which has the highest variance  
