@@ -330,6 +330,7 @@ contrast.vector5 <- matrix(c(0, 0, 0, 0, 0, 0, -1, 1), nrow=1)
 gh5 <- glht(model7, contrast.vector5)
 print(summary(gh5))
 invlogit(coef(summary(gh5))[1]) # probability of  increase in accuracy from pas 3 to pas 4 is 66. 51188 %
+
 ```
 
 
@@ -589,6 +590,7 @@ for (i in 1:29) {
 summarised.output <- output %>% 
   group_by(pas) %>% 
   summarise(mean.a=mean(a), mean.b=mean(b), mean.c=mean(c), mean.d=mean(d))
+
 
 # The formula for the sigmoid, with the optimized parameters that we found before
 mean.fit.pas1 <- function(x) summarised.output$mean.a[1] + ((summarised.output$mean.b[1]-summarised.output$mean.a[1]) / (1+exp((summarised.output$mean.c[1]-x)/(summarised.output$mean.d[1]))))

@@ -29,6 +29,8 @@ Also create a text file that is called _.Renviron_ (remember the dot) placed in 
 install.packages('reticulate')
 install.packages('Rcpp')
 library(reticulate)
+
+pacman::p_load(reticulate, Rcpp)
 print(conda_list())
 ```
 
@@ -112,6 +114,7 @@ print(np.cos(np.pi))
 from numpy import pi, arange # or you can import specific methods
 print(arange(1, 7))
 print(pi)
+
 
 matrix = np.ones(shape=(5, 5)) # create a matrix of ones
 identity = np.identity(5) # create an identity matrix (5x5)
@@ -228,10 +231,11 @@ X[:, 0] = x ** 0 # alt opløftet i 0 er 1 (første række i vores designmatrix)
 X[:, 1] = x ** 1 # x opløftet i 1 (anden række i vores designmatrix) 
 
 
-
 ```
 
 # EXERCISE 2 - Estimate bias and variance based on a true underlying function  
+
+*Exercise for you: In tomorrow’s exercise: For each question indicate whether you understood what was required of you.* 
 
 We can express regression as $y = f(x) + \epsilon$ with $E[\epsilon] = 0$ and $var(\epsilon) = \sigma^2$ ($E$ means expected value)  
   
@@ -249,23 +253,19 @@ $bias(\hat{f}(x_0)) = E[\hat{f}(x_0)] - f(x_0)$
     ii. add normally distributed noise to $y_{true}$ with $\sigma=5$ (set a seed to 7 `np.random.seed(7)`) and call it $y_{noise}$
     iii. plot the true function and the generated points  
     
-```{r}
-#load packages
-pacman::p_load(tidyverse, dplyr)
+```{python}
+np.random.seed(7)
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
 
 #create a function that squares its input
-square_fun <- function(x){
-  return(x^2)
-}
+def true_function(x):
+    return x**2
 
-square_fun(4) # 16
-square_fun(5) # 25
-
-
-#set seed
-set.seed(7)
 
 # i. generate data, ytrue, based on an input range of [0, 6] with a spacing of 0.1 
+np.arrange()
 x <- seq(0,6,0.1)
 
 
@@ -274,7 +274,6 @@ y_true <- rnorm(10, sd=5)
 
 # iii. plot the true function and the generated points
 
-ggplot( aes(x= square_fun(x), y=true))+geom_point()+geom_line()
 
 ```
 
@@ -321,3 +320,81 @@ regressor.fit() # what goes in here?
 
 
 ```
+
+
+
+# Python book exercise - chapter 10
+
+### Housing dataset: 
+The features of the 506 samples in the Housing dataset are summarized here, taken from the original source that was previously shared on https://archive.ics.uci. edu/ml/datasets/Housing:
+• CRIM: Per capita crime rate by town
+• ZN: Proportion of residential land zoned for lots over 25,000 sq. ft.
+• INDUS: Proportion of non-retail business acres per town
+• CHAS: Charles River dummy variable (= 1 if tract bounds river; 0 otherwise)
+• NOX: Nitric oxide concentration (parts per 10 million)
+• RM: Average number of rooms per dwelling
+• AGE: Proportion of owner-occupied units built prior to 1940
+• DIS: Weighted distances to five Boston employment centers
+• RAD: Index of accessibility to radial highways
+• TAX: Full-value property tax rate per $10,000
+• PTRATIO: Pupil-teacher ratio by town
+• B: 1000(Bk - 0.63)^2, where Bk is the proportion of [people of African American descent] by town
+• LSTAT: Percentage of lower status of the population
+• MEDV: Median value of owner-occupied homes in $1000s
+
+
+```{python}
+#set up package
+import pandas as pd
+
+#load data from github txt file
+df = pd.read_csv('https://raw.githubusercontent.com/rasbt/python-machine-learning-book-2nd-edition/master/code/ch10/housing.data.txt',header=None, sep='\s+')
+
+#bogen vil gerne have at vi loader ind sådan her, men det kan jeg ikke få til at fungere
+#jeg har gemt txt filen ned i week6 mappen, nvm
+dff = pd.read_csv('./housing.data.txt'), sep='\s+')
+
+#define columns
+df.columns = ['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD','TAX', 'PTRATIO', 'B', 'LSTAT', 'MEDV']
+
+#view first data
+df.head()
+
+
+#get plotting (SCATTERPLOT MATRIX)
+import matplotlib.pyplot as plt
+import seaborn as sns
+cols = ['LSTAT', 'INDUS', 'NOX', 'RM', 'MEDV']
+sns.pairplot(df[cols], size=0.9)
+plt.tight_layout()
+plt.show()
+
+
+#plot of correlation matrix #jeg kan fucking ik få det til at virke
+import numpy as np
+cm = np.corrcoef(df[cols].values.T)
+sns.set(font_scale=1.5)
+hm = sns.heatmap(cm, cbar=True, annot=True, square=True, fmt='.2f', annot_kws={'size':15},yticklabels=cols, xticklabels=cols)
+plt.show()
+#irl ser det sejt ud
+
+
+
+
+
+
+```
+
+#### Fitting at linear regression 
+
+#To fit a linear regression model, we are interested in those features that have a high correlation with our target variable MEDV (Median value of owner-occupied homes in $1000s).
+
+Looking at the previous correlation matrix, we see that our target variable MEDV shows the largest correlation with the LSTAT variable (-0.74); however, as you might remember from inspecting the scatterplot matrix, there is a clear nonlinear relationship between LSTAT and MEDV. On the other hand, the correlation between RM and MEDV is also relatively high (0.70). Given the linear relationship between these two variables that we observed in the scatterplot,*RM seems to be a good choice for an exploratory variable to introduce the concepts of a simple linear regression model in the following section*.
+
+```{r}
+
+```
+
+
+
+
