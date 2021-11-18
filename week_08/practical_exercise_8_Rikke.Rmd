@@ -43,10 +43,23 @@ import matplotlib as plt
 data = np.load("megmag_data.npy")
 data #inspect the data
 data.shape #inspect the data (number of dimensions = 3) 
-#we have 600 = number of repetitions of a visual stimulus, 102 = the second dimension is the number of sensors,  251 =the third dimension is the number of time samples) 
+#we have 682 = number of repetitions of a visual stimulus, 102 = the second dimension is the number of sensors,  251 =the third dimension is the number of time samples) 
+```
 
-data1 = np.load("pas_vector.npy")
+## 4 my own sake, an understanding of arrays
+```{python}
+import numpy as np
+x = np.arange(24).reshape(4,3,2)
+#se Mina's billede for visuel forståelse
+```
 
+
+```{r}
+pacman::p_load(png, patchwork)
+![Arras visually.](/Users/rikkeuldbaek/Desktop/Cognitive Science/3rd semester/Methods 3/github_methods_3/week_08/arrays_pic.png)
+
+
+# https://statisticsglobe.com/add-image-to-plot-in-r 
 ```
 
 
@@ -55,6 +68,7 @@ i. The data is a 3-dimensional array. The first dimension is number of repetitio
 
 ```{python}
 #make a vector fra -200 til 800, den har en værdi hvert 4. milisekund
+#dvs et spænd på 1000 (fra -200 til 800, med en optagelse hver 4 sek = )
 times = np.arange(-200, 801, 4)
 ```
     
@@ -99,9 +113,8 @@ plt.show()
 iv. Make an average over the repetition dimension using `np.mean` - use the `axis` argument. (The resulting array should have two dimensions with time as the first and magnetic field as the second)  
 
 ```{python}
-avr_rep = np.mean(data, axis=0)
-np.mean(data, axis=0)
-avr_rep.shape #inspect
+avr_rep = np.mean(data, axis=0) # repetition of visual stimulus :)) 
+avr_rep.shape #inspect, vi har 102 elementer (avrg repetition across sensors) i col 1 og 251 elementer (avrg repetition across time)) i col 2. I hver 
 ```
 
 
@@ -110,7 +123,17 @@ v. Plot the magnetic field (based on the average) as it evolves over time for ea
 ```{python}
 import matplotlib.pyplot as plt
 
-#Plot
+#Plot (sirid)
+plt.figure()
+plt.plot(times, avr_rep.T)
+plt.axvline()
+plt.axhline()
+plt.xlabel(" time")
+plt.ylabel("magnetic field")
+plt.title("magnetic field (based on the average)")
+plt.show()
+
+#plot
 plt.figure()
 plt.plot(avr_rep)
 plt.axvline()
@@ -137,13 +160,14 @@ vii. Plot the magnetic field for each of the repetitions (a line for each) for t
 ```{python}
 #Plot the magnetic field for each of the repetitions (a line for each) for the sensor that has the maximal magnetic field (sensor 73)
 plt.figure()
-plt.plot(data[:,73,:])
+plt.plot(times, data[:,73,:].T)
 plt.axvline((times[112]), color= "black") #Highlight the time point with the maximal magnetic field in the average
 plt.axhline()
 plt.xlabel(" time")
 plt.ylabel("magnetic field")
 plt.title("magnetic field (based on the average)")
 plt.show()
+
 ```
 
 
@@ -164,19 +188,34 @@ len(y)
 ```
 
 
-ii. Now make four averages (As in Exercise 1.1.iii), one for each PAS rating, and plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v  
+ii. Now make four averages (As in Exercise 1.1.iii), one for each PAS rating, and plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v 
 
 ```{python}
 #Make 4 averages, one for each PAS rating
 #1) extract each pas rating individually
-
 pas_1 = [x for x in y if x == 1]
 pas_2 = [x for x in y if x == 2]
 pas_3 = [x for x in y if x == 3]
 pas_4 = [x for x in y if x == 4]
 
-#2) 
-avr_rep_pas1= np.mean()
+#how many pas ratings for each PAS? 
+print(data[pas_1,:,:].shape) #99 pas-ratings 1 (in all data)
+print(data[pas_2,:,:].shape) #115 pas-ratings 2 (in all data)
+print(data[pas_3,:,:].shape) #208 pas-ratings 2 (in all data)
+print(data[pas_4,:,:].shape) #260 pas-ratings 4 (in all data)
+
+# Pas ratings for sensor 73
+data[pas_1,73,:] #all pas rating 1's for sensor 73
+data[pas_2,73,:] #all pas rating 2's for sensor 73
+data[pas_3,73,:] #all pas rating 3's for sensor 73
+data[pas_4,73,:] #all pas rating 4's for sensor 73
+
+
+#2) find det sted hvor alle repetitions står samme sted som deres pas rating
+avr_rep_pas1= np.mean(data[pas_1,73,:], axis = 0)
+avr_rep_pas2= np.mean(data[pas_2,73,:], axis = 0)
+avr_rep_pas3= np.mean(data[pas_3,73,:], axis = 0)
+avr_rep_pas4= np.mean(data[pas_4,73,:], axis = 0)
 
 
 #iv. Make an average over the repetition dimension using `np.mean` - use the `axis` argument. (The resulting array should have two dimensions with time as the first and magnetic field as the second)  
@@ -186,6 +225,19 @@ np.mean(data, axis=0)
 avr_rep.shape #inspect
 
 #Plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v
+#plot 
+plt.figure()
+plt.plot(avr_rep_pas1)
+plt.plot(avr_rep_pas2)
+plt.plot(avr_rep_pas3)
+plt.plot(avr_rep_pas4)
+plt.axvline()
+plt.axhline()
+plt.xlabel(" time")
+plt.ylabel("magnetic field")
+plt.title("magnetic field for each PAS-rating (based on the average)")
+plt.legend(["pas 1", "pas 2", "pas 3", "pas 4"])
+plt.show()
 
 
 ```
