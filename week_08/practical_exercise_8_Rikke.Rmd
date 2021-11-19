@@ -51,6 +51,8 @@ data.shape #inspect the data (number of dimensions = 3)
 import numpy as np
 x = np.arange(24).reshape(4,3,2)
 #se Mina's billede for visuel forståelse
+
+np.unravel_index(x)
 ```
 
 
@@ -145,7 +147,7 @@ plt.show()
 
 ```
 
-vi. Find the maximal magnetic field in the average. Then use `np.argmax` and `np.unravel_index` to find the sensor that has the maximal magnetic field.  
+vi. Find the maximal magnetic field in the average. Then use `np.argmax` (Returns the indices of the maximum values along an axis.) and `np.unravel_index` to find the sensor that has the maximal magnetic field.  
 ```{python}
 #the maximal magnetic field in the average
 maxiking = np.unravel_index(np.argmax(avr_rep), avr_rep.shape)
@@ -173,7 +175,7 @@ plt.show()
 
 viii. Describe in your own words how the response found in the average is represented in the single repetitions. But do make sure to use the concepts _signal_ and _noise_ and comment on any differences on the range of values on the y-axis  
 
-*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*  ???
 
 
 2) Now load `pas_vector.npy` (call it `y`). PAS is the same as in Assignment 2, describing the clarity of the subjective experience the subject reported after seeing the briefly presented stimulus
@@ -191,46 +193,39 @@ len(y)
 ii. Now make four averages (As in Exercise 1.1.iii), one for each PAS rating, and plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v 
 
 ```{python}
-#Make 4 averages, one for each PAS rating
-#1) extract each pas rating individually
-pas_1 = [x for x in y if x == 1]
-pas_2 = [x for x in y if x == 2]
-pas_3 = [x for x in y if x == 3]
-pas_4 = [x for x in y if x == 4]
+#subset sensor 73
+sensor_73 = data[:,73,:]
 
-#how many pas ratings for each PAS? 
-print(data[pas_1,:,:].shape) #99 pas-ratings 1 (in all data)
-print(data[pas_2,:,:].shape) #115 pas-ratings 2 (in all data)
-print(data[pas_3,:,:].shape) #208 pas-ratings 2 (in all data)
-print(data[pas_4,:,:].shape) #260 pas-ratings 4 (in all data)
+# Now make four averages (As in Exercise 1.1.iii), one for each PAS rating
+#PAS 1
+PAS_1= np.where(y == 1) #finding out where pas ratings are
+avg_rep_PAS_1 = np.mean(sensor_73[PAS_1], axis= 0)
+sensor_73[PAS_1].shape #inspect
 
-# Pas ratings for sensor 73
-data[pas_1,73,:] #all pas rating 1's for sensor 73
-data[pas_2,73,:] #all pas rating 2's for sensor 73
-data[pas_3,73,:] #all pas rating 3's for sensor 73
-data[pas_4,73,:] #all pas rating 4's for sensor 73
+#PAS 2
+PAS_2= np.where(y == 2) #finding out where pas ratings are
+avg_rep_PAS_2 = np.mean(sensor_73[PAS_2], axis= 0)
+sensor_73[PAS_2].shape #inspect
 
 
-#2) find det sted hvor alle repetitions står samme sted som deres pas rating
-avr_rep_pas1= np.mean(data[pas_1,73,:], axis = 0)
-avr_rep_pas2= np.mean(data[pas_2,73,:], axis = 0)
-avr_rep_pas3= np.mean(data[pas_3,73,:], axis = 0)
-avr_rep_pas4= np.mean(data[pas_4,73,:], axis = 0)
+#PAS 3
+PAS_3= np.where(y == 3) #finding out where pas ratings are
+avg_rep_PAS_3 = np.mean(sensor_73[PAS_3], axis= 0)
+sensor_73[PAS_3].shape #inspect
 
-
-#iv. Make an average over the repetition dimension using `np.mean` - use the `axis` argument. (The resulting array should have two dimensions with time as the first and magnetic field as the second)  
-
-avr_rep = np.mean(data, axis=0)
-np.mean(data, axis=0)
-avr_rep.shape #inspect
+#PAS 4
+PAS_4= np.where(y == 4) #finding out where pas ratings are
+avg_rep_PAS_4 = np.mean(sensor_73[PAS_4], axis= 0)
+sensor_73[PAS_4].shape #inspect
+  
 
 #Plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v
 #plot 
 plt.figure()
-plt.plot(avr_rep_pas1)
-plt.plot(avr_rep_pas2)
-plt.plot(avr_rep_pas3)
-plt.plot(avr_rep_pas4)
+plt.plot(avg_rep_PAS_1)
+plt.plot(avg_rep_PAS_2)
+plt.plot(avg_rep_PAS_3)
+plt.plot(avg_rep_PAS_4)
 plt.axvline()
 plt.axhline()
 plt.xlabel(" time")
@@ -238,13 +233,13 @@ plt.ylabel("magnetic field")
 plt.title("magnetic field for each PAS-rating (based on the average)")
 plt.legend(["pas 1", "pas 2", "pas 3", "pas 4"])
 plt.show()
-
-
 ```
 
 iii. Notice that there are two early peaks (measuring visual activity from the brain), one before 200 ms and one around 250 ms. Describe how the amplitudes of responses are related to the four PAS-scores. Does PAS 2 behave differently than expected?  
 
-```{r}
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*  ???
+
+```{python}
 
 ```
 
