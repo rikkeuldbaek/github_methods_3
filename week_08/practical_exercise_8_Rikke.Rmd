@@ -82,7 +82,7 @@ antagelse alle variabler er uafhængige, men det er de ikke
 men vi har correlation alle muligsteder så de picker ikke up independent signals
 
 ```{python}
-#     iii. Create the sensor covariance matrix $\Sigma_{XX}$: $$\Sigma_{XX} = \frac 1 N \sum_{i=1}^N XX^T$$ $N$ is the number of repetitions and $X$ has $s$ rows and $t$ columns (sensors and time), thus the shape is $X_{s\times t}$. Do the sensors pick up independent signals? (Use plt.imshow to plot the sensor covariance matrix)  
+#     iii. Create the sensor covariance matrix 
 #1) make X
 data.shape #102 sensors (rows)
 sensors = data[:,2]
@@ -125,19 +125,9 @@ v. Plot the magnetic field (based on the average) as it evolves over time for ea
 ```{python}
 import matplotlib.pyplot as plt
 
-#Plot (sirid)
+#Plot
 plt.figure()
 plt.plot(times, avr_rep.T)
-plt.axvline()
-plt.axhline()
-plt.xlabel(" time")
-plt.ylabel("magnetic field")
-plt.title("magnetic field (based on the average)")
-plt.show()
-
-#plot
-plt.figure()
-plt.plot(avr_rep)
 plt.axvline()
 plt.axhline()
 plt.xlabel(" time")
@@ -151,10 +141,10 @@ vi. Find the maximal magnetic field in the average. Then use `np.argmax` (Return
 ```{python}
 #the maximal magnetic field in the average
 maxiking = np.unravel_index(np.argmax(avr_rep), avr_rep.shape)
-print(maxiking) # sensor nr 73 ved repetition 112 har maksimale magnetic field 
+print(maxiking) # sensor nr 73 at repetition 112 got the maximum magnetic field 
 
 print(avr_rep[73,112]) #2.7886216843591933e-13 # is the same as below (SAME)
-np.amax(avr_rep) #2.7886216843591933e-13 # den maximum value in the average (SAME)
+np.amax(avr_rep) #2.7886216843591933e-13 # the maximum value in the average (SAME)
 ```
 
 
@@ -200,23 +190,23 @@ sensor_73 = data[:,73,:]
 #PAS 1
 PAS_1= np.where(y == 1) #finding out where pas ratings are
 avg_rep_PAS_1 = np.mean(sensor_73[PAS_1], axis= 0)
-sensor_73[PAS_1].shape #inspect
+sensor_73[PAS_1].shape #inspect - we've got 99 pas 1 ratings
 
 #PAS 2
 PAS_2= np.where(y == 2) #finding out where pas ratings are
 avg_rep_PAS_2 = np.mean(sensor_73[PAS_2], axis= 0)
-sensor_73[PAS_2].shape #inspect
+sensor_73[PAS_2].shape #inspect - we've got 115 pas 2 ratings
 
 
 #PAS 3
 PAS_3= np.where(y == 3) #finding out where pas ratings are
 avg_rep_PAS_3 = np.mean(sensor_73[PAS_3], axis= 0)
-sensor_73[PAS_3].shape #inspect
+sensor_73[PAS_3].shape #inspect - we've got 208 pas 3 ratings
 
 #PAS 4
 PAS_4= np.where(y == 4) #finding out where pas ratings are
 avg_rep_PAS_4 = np.mean(sensor_73[PAS_4], axis= 0)
-sensor_73[PAS_4].shape #inspect
+sensor_73[PAS_4].shape #inspect - we've got 260 pas 4 ratings
   
 
 #Plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v
@@ -239,6 +229,8 @@ iii. Notice that there are two early peaks (measuring visual activity from the b
 
 *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*  ???
 
+Pas 2 har større udsving :)
+
 ```{python}
 
 ```
@@ -247,11 +239,27 @@ iii. Notice that there are two early peaks (measuring visual activity from the b
 
 # EXERCISE 2 - Do logistic regression to classify pairs of PAS-ratings  
 
-1) Now, we are going to do Logistic Regression with the aim of classifying the PAS-rating given by the subject  
+1) Now, we are going to do Logistic Regression with the aim of classifying the PAS-rating given by the subject
     i. We'll start with a binary problem - create a new array called `data_1_2` that only contains PAS responses 1 and 2. Similarly, create a `y_1_2` for the target vector  
-    ii. Scikit-learn expects our observations (`data_1_2`) to be in a 2d-array, which has samples (repetitions) on dimension 1 and features (predictor variables) on dimension 2. Our `data_1_2` is a three-dimensional array. Our strategy will be to collapse our two last dimensions (sensors and time) into one dimension, while keeping the first dimension as it is (repetitions). Use `np.reshape` to create a variable `X_1_2` that fulfils these criteria.  
-    iii. Import the `StandardScaler` and scale `X_1_2`  
-    iv. Do a standard `LogisticRegression` - can be imported from `sklearn.linear_model` - make sure there is no `penalty` applied  
+```{python}
+#create a new array called `data_1_2` 
+data_1_2 = 
+
+
+
+```
+
+ii. Scikit-learn expects our observations (`data_1_2`) to be in a 2d-array, which has samples (repetitions) on dimension 1 and features (predictor variables) on dimension 2. Our `data_1_2` is a three-dimensional array. Our strategy will be to collapse our two last dimensions (sensors and time) into one dimension, while keeping the first dimension as it is (repetitions). Use `np.reshape` to create a variable `X_1_2` that fulfils these criteria.  
+```{python}
+
+```
+
+iii. Import the `StandardScaler` and scale `X_1_2`  
+```{python}
+
+```
+
+iv. Do a standard `LogisticRegression` - can be imported from `sklearn.linear_model` - make sure there is no `penalty` applied  
     v. Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. Are we overfitting? Besides the score, what would make you suspect that we are overfitting?  
     vi. Now apply the _L1_ penalty instead - how many of the coefficients (`.coef_`) are non-zero after this?  
     vii. Create a new reduced $X$ that only includes the non-zero coefficients - show the covariance of the non-zero features (two covariance matrices can be made; $X_{reduced}X_{reduced}^T$ or $X_{reduced}^TX_{reduced}$ (you choose the right one)) . Plot the covariance of the features using `plt.imshow`. Compared to the plot from 1.1.iii, do we see less covariance?  
