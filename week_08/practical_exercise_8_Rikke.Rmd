@@ -46,24 +46,6 @@ data.shape #inspect the data (number of dimensions = 3)
 #we have 682 = number of repetitions of a visual stimulus, 102 = the second dimension is the number of sensors,  251 =the third dimension is the number of time samples) 
 ```
 
-## 4 my own sake, an understanding of arrays
-```{python}
-import numpy as np
-x = np.arange(24).reshape(4,3,2)
-#se Mina's billede for visuel forståelse
-
-np.unravel_index(x)
-```
-
-
-```{r}
-pacman::p_load(png, patchwork)
-![Arras visually.](/Users/rikkeuldbaek/Desktop/Cognitive Science/3rd semester/Methods 3/github_methods_3/week_08/arrays_pic.png)
-
-
-# https://statisticsglobe.com/add-image-to-plot-in-r 
-```
-
 
 i. The data is a 3-dimensional array. The first dimension is number of repetitions of a visual stimulus , the second dimension is the number of sensors that record magnetic fields (in Tesla) that stem from neurons activating in the brain, and the third dimension is the number of time samples. How many repetitions, sensors and time samples are there?  
     ii. The time range is from (and including) -200 ms to (and including) 800 ms with a sample recorded every 4 ms. At time 0, the visual stimulus was briefly presented. Create a 1-dimensional array called `times` that represents this.  
@@ -83,18 +65,6 @@ men vi har correlation alle muligsteder så de picker ikke up independent signal
 
 ```{python}
 #     iii. Create the sensor covariance matrix 
-#1) make X
-data.shape #102 sensors (rows)
-sensors = data[:,2]
-len(sensors)
-times.shape #251 times (columns)
-
-#an example for my own sake
-try_1= data[12,:,:]
-len(try_1)
-try_1.shape #102 rows and 251 column
-
-
 #calculating the dot product for all rows i using all datapoints in the dimensions
 covariance_matrix = []
 n = 682
@@ -151,7 +121,7 @@ vii. Plot the magnetic field for each of the repetitions (a line for each) for t
 ```{python}
 #Plot the magnetic field for each of the repetitions (a line for each) for the sensor that has the maximal magnetic field (sensor 73)
 plt.figure()
-plt.plot(times, data[:,73,:].T)
+plt.plot(times, data[:,72,:].T)
 plt.axvline((times[112]), color= "black") #Highlight the time point with the maximal magnetic field in the average
 plt.axhline()
 plt.xlabel(" time")
@@ -183,7 +153,7 @@ ii. Now make four averages (As in Exercise 1.1.iii), one for each PAS rating, an
 
 ```{python}
 #subset sensor 73
-sensor_73 = data[:,73,:]
+sensor_73 = data[:,72,:]
 
 # Now make four averages (As in Exercise 1.1.iii), one for each PAS rating
 #PAS 1
@@ -211,10 +181,10 @@ sensor_73[PAS_4].shape #inspect - we've got 260 pas 4 ratings
 #Plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v
 #plot 
 plt.figure()
-plt.plot(avg_rep_PAS_1)
-plt.plot(avg_rep_PAS_2)
-plt.plot(avg_rep_PAS_3)
-plt.plot(avg_rep_PAS_4)
+plt.plot(times, avg_rep_PAS_1.T)
+plt.plot(times, avg_rep_PAS_2.T)
+plt.plot(times, avg_rep_PAS_3.T)
+plt.plot(times, avg_rep_PAS_4.T)
 plt.axvline()
 plt.axhline()
 plt.xlabel(" time")
@@ -242,24 +212,18 @@ Pas 2 har større udsving :)
     i. We'll start with a binary problem - create a new array called `data_1_2` that only contains PAS responses 1 and 2. Similarly, create a `y_1_2` for the target vector  
 ```{python}
 #create a new array called `data_1_2` 
-#data_1_2= np.concatenate((data[PAS_1,:,:],data[PAS_2,:,:]), axis=1) #HAR 4 DIM
-data_1_2=  np.concatenate((data[PAS_1], data[PAS_2]), axis=0) # 3D
+data_1_2 =  np.concatenate((data[PAS_1], data[PAS_2]), axis=0) # 3D
 data_1_2.shape
 data_1_2.ndim
 
 #create a `y_1_2` for the target vector
-y_1= np.where(y == 1)
-y_2= np.where(y == 2)
-y_1_1= np.concatenate((y_1, y_2), axis = 1)
-y_1_1.shape
-y_1_2= y_1_1[0]
-y_1_2.shape
-
-
-#ELLER skal jeg lave en target variable med 1's and 0's ? 
-nums = np.ones(214)
-nums[:99] = 0
-np.random.shuffle(nums)
+y_1_2 = []
+for i in range(len(y)):
+    if y[i] == 1:
+        y_1_2.append(i)
+    if y[i] == 2:
+        y_1_2.append(i)
+        
 ```
 
 ii. Scikit-learn expects our observations (`data_1_2`) to be in a 2d-array, which has samples (repetitions) on dimension 1 and features (predictor variables) on dimension 2. Our `data_1_2` is a three-dimensional array. Our strategy will be to collapse our two last dimensions (sensors and time) into one dimension, while keeping the first dimension as it is (repetitions). Use `np.reshape` to create a variable `X_1_2` that fulfils these criteria.  
@@ -268,10 +232,8 @@ ii. Scikit-learn expects our observations (`data_1_2`) to be in a 2d-array, whic
 
 #dim 1: repetition[dim 0]
 # dim 2: sensor & time [dim 1-2]
-X_1_2= data_1_2.reshape(data_1_2.shape[0], (data_1_2.shape[1]*data_1_2.shape[2]))
+X_1_2= data_1_2.reshape(data_1_2.shape[0],(data_1_2.shape[1]*data_1_2.shape[2]))
 X_1_2.shape 
-# ???????
-
 ```
 
 iii. Import the `StandardScaler` and scale `X_1_2`  
@@ -290,33 +252,54 @@ We could suspect that we are overfitting because we do not penalize.
 ```{python}
 # Do a standard `LogisticRegression` 
 from sklearn.linear_model import LogisticRegression #importing 
-regressor = LogisticRegression(penalty ='none').fit(scaled_X_1_2, y_1_2) #renaming stuff for simplicity
-logistic_hat = regressor.predict(scaled_X_1_2) #a bunch of 4's
-len(logistic_hat)
+logR = LogisticRegression(penalty ='none')#renaming stuff for simplicity
+logR.fit(scaled_X_1_2, y_1_2)
 
 #Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
-regressor.score(X_1_2, y_1_2) # 0.004672897196261682, 
+logR.score(scaled_X_1_2, y_1_2) # 1.0
 
 #slope and intercept? 
-intercept = regressor.intercept_;print(intercept) #PRINTING INTERCEPT
-slope = regressor.coef_;print(slope) # printing SLOPE
-
+intercept = logR.intercept_;print(intercept) #PRINTING INTERCEPT
+slope = logR.coef_;print(slope) # printing SLOPE
 ```
   
 vi. Now apply the _L1_ penalty instead - how many of the coefficients (`.coef_`) are non-zero after this?  
 ```{python}
-# Do a standard `LogisticRegression` - this time use penalty 'L1'
+# Do a standard `LogisticRegression` - this time use penalty 'L1' (LASSO)
 from sklearn.linear_model import LogisticRegression #importing 
-regressor_L1 = LogisticRegression(penalty ='l1', solver= 'saga').fit(scaled_X_1_2, y_1_2) #renaming stuff for simplicity
-logistic_hat_1 = regressor.predict(scaled_X_1_2) #a bunch of 4's
-len(logistic_hat_1)
+logR_L1 = LogisticRegression(penalty ='l1', tol = 0.01, solver = "saga", c=1) #renaming stuff for simplicity
+logR_L1.fit(scaled_X_1_2, y_1_2) 
 
 #Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
-regressor.score(X_1_2, y_1_2) # 0.004672897196261682, 
+logR_L1.score(scaled_X_1_2, y_1_2) # 1.0 
 
+#coefs being 0?
+zeros_L1 = logR_L1.coef_[logR_L1.coef_==0]
+len(zeros_L1) # her har jeg mange 0's (say whaaat ???)
+
+
+#ovenstående kan ik rigtig køre, så jeg bruger L2 i stedet for (RIDGE REGRESSION)
+# Do a standard `LogisticRegression` - this time use penalty 'L1' 
+from sklearn.linear_model import LogisticRegression #importing 
+logR_L2 = LogisticRegression(penalty ='l2') #renaming stuff for simplicity
+logR_L2.fit(scaled_X_1_2, y_1_2) 
+
+#Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
+logR_L2.score(scaled_X_1_2, y_1_2) # 1.0 
+
+#coefs being 0?
+zeros_L2 = logR_L2.coef_[logR_L2.coef_==0]
+len(zeros_L2) # i ridge regression får jeg aldrig 0, 
 ```
 
 vii. Create a new reduced $X$ that only includes the non-zero coefficients - show the covariance of the non-zero features (two covariance matrices can be made; $X_{reduced}X_{reduced}^T$ or $X_{reduced}^TX_{reduced}$ (you choose the right one)) . Plot the covariance of the features using `plt.imshow`. Compared to the plot from 1.1.iii, do we see less covariance?  
+
+```{python}
+
+
+
+```
+
     
 
 
