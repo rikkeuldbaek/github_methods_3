@@ -134,7 +134,6 @@ plt.xlabel(" time")
 plt.ylabel("magnetic field")
 plt.title("magnetic field (based on the average)")
 plt.show()
-
 ```
 
 vi. Find the maximal magnetic field in the average. Then use `np.argmax` (Returns the indices of the maximum values along an axis.) and `np.unravel_index` to find the sensor that has the maximal magnetic field.  
@@ -243,26 +242,85 @@ Pas 2 har større udsving :)
     i. We'll start with a binary problem - create a new array called `data_1_2` that only contains PAS responses 1 and 2. Similarly, create a `y_1_2` for the target vector  
 ```{python}
 #create a new array called `data_1_2` 
-data_1_2 = 
+#data_1_2= np.concatenate((data[PAS_1,:,:],data[PAS_2,:,:]), axis=1) #HAR 4 DIM
+data_1_2=  np.concatenate((data[PAS_1], data[PAS_2]), axis=0) # 3D
+data_1_2.shape
+data_1_2.ndim
+
+#create a `y_1_2` for the target vector
+y_1= np.where(y == 1)
+y_2= np.where(y == 2)
+y_1_1= np.concatenate((y_1, y_2), axis = 1)
+y_1_1.shape
+y_1_2= y_1_1[0]
+y_1_2.shape
 
 
-
+#ELLER skal jeg lave en target variable med 1's and 0's ? 
+nums = np.ones(214)
+nums[:99] = 0
+np.random.shuffle(nums)
 ```
 
 ii. Scikit-learn expects our observations (`data_1_2`) to be in a 2d-array, which has samples (repetitions) on dimension 1 and features (predictor variables) on dimension 2. Our `data_1_2` is a three-dimensional array. Our strategy will be to collapse our two last dimensions (sensors and time) into one dimension, while keeping the first dimension as it is (repetitions). Use `np.reshape` to create a variable `X_1_2` that fulfils these criteria.  
 ```{python}
+#collapse our two last dimensions (sensors and time) into one dimension, while keeping the first dimension as it is (repetitions). Use `np.reshape` to create a variable `X_1_2` that fulfils these criteria.  
+
+#dim 1: repetition[dim 0]
+# dim 2: sensor & time [dim 1-2]
+X_1_2= data_1_2.reshape(data_1_2.shape[0], (data_1_2.shape[1]*data_1_2.shape[2]))
+X_1_2.shape 
+# ???????
 
 ```
 
 iii. Import the `StandardScaler` and scale `X_1_2`  
 ```{python}
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+scaled_X_1_2 = scaler.fit_transform(X_1_2)
+scaled_X_1_2.shape
+```
+
+iv. Do a standard `LogisticRegression` - can be imported from `sklearn.linear_model` - make sure there is no `penalty` applied (DEFAULT IS 'L2')  
+    v. Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. Are we overfitting? Besides the score, what would make you suspect that we are overfitting? 
+
+We could suspect that we are overfitting because we do not penalize. 
+    
+```{python}
+# Do a standard `LogisticRegression` 
+from sklearn.linear_model import LogisticRegression #importing 
+regressor = LogisticRegression(penalty ='none').fit(scaled_X_1_2, y_1_2) #renaming stuff for simplicity
+logistic_hat = regressor.predict(scaled_X_1_2) #a bunch of 4's
+len(logistic_hat)
+
+#Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
+regressor.score(X_1_2, y_1_2) # 0.004672897196261682, 
+
+#slope and intercept? 
+intercept = regressor.intercept_;print(intercept) #PRINTING INTERCEPT
+slope = regressor.coef_;print(slope) # printing SLOPE
+
+```
+  
+vi. Now apply the _L1_ penalty instead - how many of the coefficients (`.coef_`) are non-zero after this?  
+```{python}
+# Do a standard `LogisticRegression` - this time use penalty 'L1'
+from sklearn.linear_model import LogisticRegression #importing 
+regressor_L1 = LogisticRegression(penalty ='l1', solver= 'saga').fit(scaled_X_1_2, y_1_2) #renaming stuff for simplicity
+logistic_hat_1 = regressor.predict(scaled_X_1_2) #a bunch of 4's
+len(logistic_hat_1)
+
+#Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
+regressor.score(X_1_2, y_1_2) # 0.004672897196261682, 
 
 ```
 
-iv. Do a standard `LogisticRegression` - can be imported from `sklearn.linear_model` - make sure there is no `penalty` applied  
-    v. Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. Are we overfitting? Besides the score, what would make you suspect that we are overfitting?  
-    vi. Now apply the _L1_ penalty instead - how many of the coefficients (`.coef_`) are non-zero after this?  
-    vii. Create a new reduced $X$ that only includes the non-zero coefficients - show the covariance of the non-zero features (two covariance matrices can be made; $X_{reduced}X_{reduced}^T$ or $X_{reduced}^TX_{reduced}$ (you choose the right one)) . Plot the covariance of the features using `plt.imshow`. Compared to the plot from 1.1.iii, do we see less covariance?  
+vii. Create a new reduced $X$ that only includes the non-zero coefficients - show the covariance of the non-zero features (two covariance matrices can be made; $X_{reduced}X_{reduced}^T$ or $X_{reduced}^TX_{reduced}$ (you choose the right one)) . Plot the covariance of the features using `plt.imshow`. Compared to the plot from 1.1.iii, do we see less covariance?  
+    
+
+
+
 2) Now, we are going to build better (more predictive) models by using cross-validation as an outcome measure    
     i. Import `cross_val_score` and `StratifiedKFold` from `sklearn.model_selection`  
     ii. To make sure that our training data sets are not biased to one target (PAS) or the other, create `y_1_2_equal`, which should have an equal number of each target. Create a similar `X_1_2_equal`. The function `equalize_targets_binary` in the code chunk associated with Exercise 2.2.ii can be used. Remember to scale `X_1_2_equal`!  
