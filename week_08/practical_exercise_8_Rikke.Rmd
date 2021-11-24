@@ -154,8 +154,9 @@ ii. Now make four averages (As in Exercise 1.1.iii), one for each PAS rating, an
 
 ```{python}
 #subset sensor 73
-sensor_73 = data[:,72,:]
+sensor_73 = data[:,73,:]
 
+len(y)
 # Now make four averages (As in Exercise 1.1.iii), one for each PAS rating
 #PAS 1
 PAS_1= np.where(y == 1) #finding out where pas ratings are
@@ -182,10 +183,10 @@ sensor_73[PAS_4].shape #inspect - we've got 260 pas 4 ratings
 #Plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v
 #plot 
 plt.figure()
-plt.plot(times, avg_rep_PAS_1.T)
-plt.plot(times, avg_rep_PAS_2.T)
-plt.plot(times, avg_rep_PAS_3.T)
-plt.plot(times, avg_rep_PAS_4.T)
+plt.plot(times, avg_rep_PAS_1)
+plt.plot(times, avg_rep_PAS_2)
+plt.plot(times, avg_rep_PAS_3)
+plt.plot(times, avg_rep_PAS_4)
 plt.axis([-200,800,-3e-13,3e-13])
 plt.axvline()
 plt.axhline()
@@ -222,9 +223,9 @@ data_1_2.ndim
 y_1_2 = []
 for i in range(len(y)):
     if y[i] == 1:
-        y_1_2.append(i)
+        y_1_2.append(1)
     if y[i] == 2:
-        y_1_2.append(i)
+        y_1_2.append(2) #append real numbers and not indices
         
 ```
 
@@ -235,7 +236,7 @@ ii. Scikit-learn expects our observations (`data_1_2`) to be in a 2d-array, whic
 #dim 1: repetition[dim 0]
 # dim 2: sensor & time [dim 1-2]
 X_1_2= data_1_2.reshape(data_1_2.shape[0],(data_1_2.shape[1]*data_1_2.shape[2]))
-X_1_2.shape 
+X_1_2.shape  #we actually just reduced dim 1 & 2 together by multiplying them :))
 ```
 
 iii. Import the `StandardScaler` and scale `X_1_2`  
@@ -264,14 +265,13 @@ logR.score(scaled_X_1_2, y_1_2) # 1.0
   
 vi. Now apply the _L1_ penalty instead - how many of the coefficients (`.coef_`) are non-zero after this?  
 
-After applying L1 penalty 4448 of my coefficients are non-zero which makes sense since .... 
+After applying L1 penalty 217 of my coefficients are non-zero which makes sense since .... 
 *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*  ???
 
 ```{python}
-
 # Do a standard `LogisticRegression` - this time use penalty 'L1' (LASSO)
 from sklearn.linear_model import LogisticRegression #importing 
-logR_L1 = LogisticRegression(penalty ='l1', tol = 0.01, solver = "liblinear", random_state= 1) #renaming stuff for simplicity
+logR_L1 = LogisticRegression(penalty ='l1', solver = "liblinear", random_state= 1) #renaming stuff for simplicity
 logR_L1.fit(scaled_X_1_2, y_1_2) 
 
 #Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
@@ -279,61 +279,24 @@ logR_L1.score(scaled_X_1_2, y_1_2) # still 1.0
 
 #coefs being 0?
 print(np.sum(logR_L1.coef_ !=0))
-
-
-nuller = np.where(logR.coef_ >0)
-type(nuller)
-
-nuller_ = nuller.astype('int32')
-
-nuller.ndim
-len(nuller)
-nuller.shape
-
 ```
 
 vii. Create a new reduced $X$ that only includes the non-zero coefficients - show the covariance of the non-zero features (two covariance matrices can be made; $X_{reduced}X_{reduced}^T$ or $X_{reduced}^TX_{reduced}$ (you choose the right one)) . Plot the covariance of the features using `plt.imshow`. Compared to the plot from 1.1.iii, do we see less covariance?  
 
 ```{python}
-#my first take, makes little sense? but equal as above
-X_reduced = logR_L1.coef_[logR_L1.coef_ !=0]
-len(X_reduced) # 4448
+#### Create a new reduced $X$ that only includes the non-zero coefficients
+coefs = logR_L1.coef_.flatten() #makes 2D to list
+non_zero = coefs!= 0 #isolate coefficients that are  non-zero
+X_reduced = scaled_X_1_2[:,non_zero] #making the reduced X
+X_reduced.shape
 
-#Create a new reduced $X$ that only includes the non-zero coefficients
-X_reduced = np.where(logR_L1.coef_[0] !=0)
-X_reduced = np.where(logR_L1.coef_ !=0)
-reduced_data=np.squeeze(scaled_X_1_2[:,scaled_X_1_2])
-cov_mat = np.cov(reduced.data)
+covariance_matrix_1 = X_reduced.T @ X_reduced # matrix multiplication
+covariance_matrix_1.shape #now its (217,217)
 
+#plot the covariance_matrix_1
 import matplotlib.pyplot as plt
-plt.figure()
-plt.imshow(cov_mat)
-plt.show
-
-
-######NEW TAKE
-cov_mat = []
-n= np.sum(logR_L1.coef_ !=0)
-
-for i in range(n):
-  cov_mat.append(X_reduced[:,i] @ X_reduced[:,i].T) 
-
-cov_mat = sum(cov_mat)/n
-
-import matplotlib.pyplot as plt
-plt.figure()
-plt.imshow(cov_mat)
+plt.imshow(covariance_matrix_1)
 plt.show()
-
-#out of the loop the dot product of the the matrices for each i is summed and divided by n.
-covariance_matrix = sum(covariance_matrix)/n
-
-#plotting the covariance matrix
-import matplotlib.pyplot as plt
-plt.figure()
-plt.imshow(covariance_matrix)
-plt.show()
-
 ```
 
 
@@ -347,6 +310,11 @@ from sklearn.model_selection import cross_val_score #importing stuff 2
 
 ii. To make sure that our training data sets are not biased to one target (PAS) or the other, create `y_1_2_equal`, which should have an equal number of each target. Create a similar `X_1_2_equal`. The function `equalize_targets_binary` in the code chunk associated with Exercise 2.2.ii can be used. Remember to scale `X_1_2_equal`!  
 ```{python}
+
+
+
+
+
 
 # Exercise 2.2.ii
 def equalize_targets_binary(data, y):
