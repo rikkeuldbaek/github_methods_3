@@ -337,12 +337,12 @@ def equalize_targets_binary(data, y):
     return new_data, new_y
 
 
-X_1_2_equal, y_1_2_equal = equalize_targets_binary(data_1_2, y_1_2) #make that code spinnnnn 
+data_1_2_equal, y_1_2_equal = equalize_targets_binary(data_1_2, y_1_2) #make that code spinnnnn 
 y_1_2_equal.shape #check that dope data out (1 dim)
-X_1_2_equal.shape #check that dope data out (3 dim)
+data_1_2_equal.shape #check that dope data out (3 dim)
 
 #rehape X_1_2_equal from 3D to 2D
-X_1_2_equal= X_1_2_equal.reshape(198,-1) # now it's 2D
+X_1_2_equal= data_1_2_equal.reshape(198,-1) # now it's 2D (doing -1 takes everything else than )
 X_1_2_equal.ndim
 
 #Scale X_1_2_equal
@@ -364,30 +364,111 @@ logR_standard.fit(scaled_X_1_2_equal, y_1_2_equal) #actually fitting the model
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 cv = StratifiedKFold() #abbriviation for simplicity
 
-scaled_X_1_2_equal # our X (standardized)
-y_1_2_equal # our y
+scaled_X_1_2_equal.shape # our X (standardized)
+y_1_2_equal.shape # our y
 
-scores = cross_val_score(logR_standard, scaled_X_1_2_equal, y_1_2_equal, cv=cv)
+scores = cross_val_score(logR_standard, scaled_X_1_2_equal, y_1_2_equal, cv=5) #cv = 5 is 5 folds
 print(np.mean(scores)) #0.4746153846153846
-
-logR_l2 = LogisticRegression(C=10)
-scores_l2 = cross_val_score(logR_l2, X_std, y, cv=cv)
-print(np.mean(scores_l2))
+```
 
 
+iv. Do L2-regularisation with the following `Cs=  [1e5, 1e1, 1e-5]`. Use the same kind of cross-validation as in Exercise 2.2.iii. In the best-scoring of these models, how many more/fewer predictions are correct (on average)? 
+
+
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*  ???
+I don't know lol
+
+```{python}
+############### L2 with C=1e5 (10.0000)
+logR_L2_1 = LogisticRegression(C=1e5, penalty ='l2', solver = "liblinear", random_state= 1) #specifying stuff in model
+logR_L2_1.fit(scaled_X_1_2_equal, y_1_2_equal)  #actually fitting the model
+
+#Cross val score
+scores_L2_1 = cross_val_score(logR_L2_1, scaled_X_1_2_equal, y_1_2_equal, cv=5) #cv = 5 is 5 folds
+print(np.mean(scores_L2_1)) #0.46987179487179487
+
+scores_L2_1 # 5 values cuz we cross validate 5 times
+
+
+
+###############  L2 with C=1e1 (10)
+logR_L2_2 = LogisticRegression(C=1e1, penalty ='l2', solver = "liblinear", random_state= 1) #specifying stuff in model
+logR_L2_2.fit(scaled_X_1_2_equal, y_1_2_equal)  #actually fitting the model
+
+#Cross val score
+scores_L2_2 = cross_val_score(logR_L2_2, scaled_X_1_2_equal, y_1_2_equal, cv=5) #cv = 5 is 5 folds
+print(np.mean(scores_L2_2)) #0.47000000000000003
+
+scores_L2_2 # 5 values cuz we cross validate 5 times
+
+
+
+
+###############  L2 with C=1e-5 (0.00001)
+logR_L2_3 = LogisticRegression(C=1e-5, penalty ='l2', solver = "liblinear", random_state= 1) #specifying stuff in model
+logR_L2_3.fit(scaled_X_1_2_equal, y_1_2_equal)  #actually fitting the model
+
+#Cross val score
+scores_L2_3 = cross_val_score(logR_L2_3, scaled_X_1_2_equal, y_1_2_equal, cv=5) #cv = 5 is 5 folds
+print(np.mean(scores_L2_3)) #0.4805128205128205
+
+scores_L2_3 # 5 values cuz we cross validate 5 times
+```
+
+
+v. Instead of fitting a model on all `n_sensors * n_samples` (time samples?) features, fit  a logistic regression (same kind as in Exercise 2.2.iv (use the `C` that resulted in the best prediction)) for __each__ time sample and use the same cross-validation as in Exercise 2.2.iii. What are the time points where classification is best? Make a plot with time on the x-axis and classification score on the y-axis with a horizontal line at the chance level (what is the chance level for this analysis?)  
+
+
+i picked the last model that resulted in the largest score of 0.4805128205128205
+
+and the largest score of the cross val loop = 0.5752564102564103
+
+```{python}
+###############  L2 with C=1e-5 (0.00001) is the best model 
+cv_scores= [] #make an empty list
+log_loop= LogisticRegression(C=1e-5, penalty ='l2', solver = "liblinear", random_state= 1) #best model from before defined before the loop :)
+
+#logistic regression on 1 time sample
+for i in range(251):
+  transformed_data = scaler.fit_transform(data_1_2_equal[:,:,i]) # transform the data first
+  log_loop.fit(transformed_data, y_1_2_equal) #loop and fit through the transformed data
+  scorez= cross_val_score(log_loop, transformed_data, y_1_2_equal, cv=5) #calculate cross validation scores
+  cv_scores.append(np.mean(scorez)) #append to the list 'cv_scores'
+
+cv_scores
+
+#the maximal cross validation score from the logistic regression loop :) 
+np.amax(cv_scores) #0.5752564102564103
+
+
+# find the index place of the max time point 0.5752564102564103
+np.argmax(cv_scores) # index for maksimale punkt
+
+
+#plot time on the x-axis and classification score on the y-axis with a horizontal line at the chance level
+plt.figure()
+plt.plot(times, cv_scores)
+plt.axvline((times[152]), color= "black") #Highlight the time point with the maximal magnetic field in the average
+plt.axhline(0.5) #chance level of 0.5, since its binary
+plt.xlabel(" time")
+plt.ylabel("classification score")
+plt.title("Classification plot")
+plt.show()
 
 ```
 
-iv. Do L2-regularisation with the following `Cs=  [1e5, 1e1, 1e-5]`. Use the same kind of cross-validation as in Exercise 2.2.iii. In the best-scoring of these models, how many more/fewer predictions are correct (on average)? 
+
+vi. Now do the same, but with L1 regression - set `C=1e-1` - what are the time points when classification is best? (make a plot)?  
 ```{python}
 
 ```
 
 
-    v. Instead of fitting a model on all `n_sensors * n_samples` features, fit  a logistic regression (same kind as in Exercise 2.2.iv (use the `C` that resulted in the best prediction)) for __each__ time sample and use the same cross-validation as in Exercise 2.2.iii. What are the time points where classification is best? Make a plot with time on the x-axis and classification score on the y-axis with a horizontal line at the chance level (what is the chance level for this analysis?)  
-    vi. Now do the same, but with L1 regression - set `C=1e-1` - what are the time points when classification is best? (make a plot)?  
-    vii. Finally, fit the same models as in Exercise 2.2.vi but now for `data_1_4` and `y_1_4` (create a data set and a target vector that only contains PAS responses 1 and 4). What are the time points when classification is best? Make a plot with time on the x-axis and classification score on the y-axis with a horizontal line at the chance level (what is the chance level for this analysis?)  
-    
+vii. Finally, fit the same models as in Exercise 2.2.vi but now for `data_1_4` and `y_1_4` (create a data set and a target vector that only contains PAS responses 1 and 4). What are the time points when classification is best? Make a plot with time on the x-axis and classification score on the y-axis with a horizontal line at the chance level (what is the chance level for this analysis?)  
+```{python}
+
+```
+
     
 
 3) Is pairwise classification of subjective experience possible? Any surprises in the classification accuracies, i.e. how does the classification score fore PAS 1 vs 4 compare to the classification score for PAS 1 vs 2?  
