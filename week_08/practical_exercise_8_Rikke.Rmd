@@ -77,6 +77,7 @@ covariance_matrix = sum(covariance_matrix)/n
 
 #plotting the covariance matrix
 import matplotlib.pyplot as plt
+plt.figure()
 plt.imshow(covariance_matrix)
 plt.show()
 
@@ -249,6 +250,7 @@ iv. Do a standard `LogisticRegression` - can be imported from `sklearn.linear_mo
     v. Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. Are we overfitting? Besides the score, what would make you suspect that we are overfitting? 
 
 We could suspect that we are overfitting because we do not penalize. 
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*  ???
     
 ```{python}
 # Do a standard `LogisticRegression` 
@@ -258,58 +260,144 @@ logR.fit(scaled_X_1_2, y_1_2)
 
 #Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
 logR.score(scaled_X_1_2, y_1_2) # 1.0
-
-#slope and intercept? 
-intercept = logR.intercept_;print(intercept) #PRINTING INTERCEPT
-slope = logR.coef_;print(slope) # printing SLOPE
 ```
   
 vi. Now apply the _L1_ penalty instead - how many of the coefficients (`.coef_`) are non-zero after this?  
+
+After applying L1 penalty 4448 of my coefficients are non-zero which makes sense since .... 
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*  ???
+
 ```{python}
+
 # Do a standard `LogisticRegression` - this time use penalty 'L1' (LASSO)
 from sklearn.linear_model import LogisticRegression #importing 
-logR_L1 = LogisticRegression(penalty ='l1', tol = 0.01, solver = "saga", c=1) #renaming stuff for simplicity
+logR_L1 = LogisticRegression(penalty ='l1', tol = 0.01, solver = "liblinear", random_state= 1) #renaming stuff for simplicity
 logR_L1.fit(scaled_X_1_2, y_1_2) 
 
 #Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
-logR_L1.score(scaled_X_1_2, y_1_2) # 1.0 
+logR_L1.score(scaled_X_1_2, y_1_2) # still 1.0 
 
 #coefs being 0?
-zeros_L1 = logR_L1.coef_[logR_L1.coef_==0]
-len(zeros_L1) # her har jeg mange 0's (say whaaat ???)
+print(np.sum(logR_L1.coef_ !=0))
 
 
-#ovenstående kan ik rigtig køre, så jeg bruger L2 i stedet for (RIDGE REGRESSION)
-# Do a standard `LogisticRegression` - this time use penalty 'L1' 
-from sklearn.linear_model import LogisticRegression #importing 
-logR_L2 = LogisticRegression(penalty ='l2') #renaming stuff for simplicity
-logR_L2.fit(scaled_X_1_2, y_1_2) 
+nuller = np.where(logR.coef_ >0)
+type(nuller)
 
-#Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
-logR_L2.score(scaled_X_1_2, y_1_2) # 1.0 
+nuller_ = nuller.astype('int32')
 
-#coefs being 0?
-zeros_L2 = logR_L2.coef_[logR_L2.coef_==0]
-len(zeros_L2) # i ridge regression får jeg aldrig 0, 
+nuller.ndim
+len(nuller)
+nuller.shape
+
 ```
 
 vii. Create a new reduced $X$ that only includes the non-zero coefficients - show the covariance of the non-zero features (two covariance matrices can be made; $X_{reduced}X_{reduced}^T$ or $X_{reduced}^TX_{reduced}$ (you choose the right one)) . Plot the covariance of the features using `plt.imshow`. Compared to the plot from 1.1.iii, do we see less covariance?  
 
 ```{python}
+#my first take, makes little sense? but equal as above
+X_reduced = logR_L1.coef_[logR_L1.coef_ !=0]
+len(X_reduced) # 4448
+
+#Create a new reduced $X$ that only includes the non-zero coefficients
+X_reduced = np.where(logR_L1.coef_[0] !=0)
+X_reduced = np.where(logR_L1.coef_ !=0)
+reduced_data=np.squeeze(scaled_X_1_2[:,scaled_X_1_2])
+cov_mat = np.cov(reduced.data)
+
+import matplotlib.pyplot as plt
+plt.figure()
+plt.imshow(cov_mat)
+plt.show
 
 
+######NEW TAKE
+cov_mat = []
+n= np.sum(logR_L1.coef_ !=0)
+
+for i in range(n):
+  cov_mat.append(X_reduced[:,i] @ X_reduced[:,i].T) 
+
+cov_mat = sum(cov_mat)/n
+
+import matplotlib.pyplot as plt
+plt.figure()
+plt.imshow(cov_mat)
+plt.show()
+
+#out of the loop the dot product of the the matrices for each i is summed and divided by n.
+covariance_matrix = sum(covariance_matrix)/n
+
+#plotting the covariance matrix
+import matplotlib.pyplot as plt
+plt.figure()
+plt.imshow(covariance_matrix)
+plt.show()
 
 ```
-
-    
-
 
 
 2) Now, we are going to build better (more predictive) models by using cross-validation as an outcome measure    
     i. Import `cross_val_score` and `StratifiedKFold` from `sklearn.model_selection`  
-    ii. To make sure that our training data sets are not biased to one target (PAS) or the other, create `y_1_2_equal`, which should have an equal number of each target. Create a similar `X_1_2_equal`. The function `equalize_targets_binary` in the code chunk associated with Exercise 2.2.ii can be used. Remember to scale `X_1_2_equal`!  
-    iii. Do cross-validation with 5 stratified folds doing standard `LogisticRegression` (See Exercise 2.1.iv)  
-    iv. Do L2-regularisation with the following `Cs=  [1e5, 1e1, 1e-5]`. Use the same kind of cross-validation as in Exercise 2.2.iii. In the best-scoring of these models, how many more/fewer predictions are correct (on average)?  
+```{python}
+# imports :))
+from sklearn.model_selection import StratifiedKFold #importing stuff 1
+from sklearn.model_selection import cross_val_score #importing stuff 2
+```
+
+ii. To make sure that our training data sets are not biased to one target (PAS) or the other, create `y_1_2_equal`, which should have an equal number of each target. Create a similar `X_1_2_equal`. The function `equalize_targets_binary` in the code chunk associated with Exercise 2.2.ii can be used. Remember to scale `X_1_2_equal`!  
+```{python}
+
+# Exercise 2.2.ii
+def equalize_targets_binary(data, y):
+    np.random.seed(7)
+    targets = np.unique(y) ## find the number of targets
+    if len(targets) > 2:
+        raise NameError("can't have more than two targets")
+    counts = list()
+    indices = list()
+    for target in targets:
+        counts.append(np.sum(y == target)) ## find the number of each target
+        indices.append(np.where(y == target)[0]) ## find their indices
+    min_count = np.min(counts)
+    # randomly choose trials
+    first_choice = np.random.choice(indices[0], size=min_count, replace=False)
+    second_choice = np.random.choice(indices[1], size=min_count,replace=False)
+    
+    # create the new data sets
+    new_indices = np.concatenate((first_choice, second_choice))
+    new_y = y[new_indices]
+    new_data = data[new_indices, :, :]
+    
+    return new_data, new_y
+
+
+
+#create `y_1_2_equal`, which should have an equal number of each target
+y_1_2_equal = 
+
+# Create a similar `X_1_2_equal`
+X_1_2_equal = 
+
+#Scale X_1_2_equal
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+scaled_X_1_2_equal = scaler.fit_transform(X_1_2_equal)
+scaled_X_1_2_equal.shape
+```
+
+
+iii. Do cross-validation with 5 stratified folds doing standard `LogisticRegression` (See Exercise 2.1.iv)  
+```{python}
+
+```
+
+iv. Do L2-regularisation with the following `Cs=  [1e5, 1e1, 1e-5]`. Use the same kind of cross-validation as in Exercise 2.2.iii. In the best-scoring of these models, how many more/fewer predictions are correct (on average)? 
+```{python}
+
+```
+
+
     v. Instead of fitting a model on all `n_sensors * n_samples` features, fit  a logistic regression (same kind as in Exercise 2.2.iv (use the `C` that resulted in the best prediction)) for __each__ time sample and use the same cross-validation as in Exercise 2.2.iii. What are the time points where classification is best? Make a plot with time on the x-axis and classification score on the y-axis with a horizontal line at the chance level (what is the chance level for this analysis?)  
     vi. Now do the same, but with L1 regression - set `C=1e-1` - what are the time points when classification is best? (make a plot)?  
     vii. Finally, fit the same models as in Exercise 2.2.vi but now for `data_1_4` and `y_1_4` (create a data set and a target vector that only contains PAS responses 1 and 4). What are the time points when classification is best? Make a plot with time on the x-axis and classification score on the y-axis with a horizontal line at the chance level (what is the chance level for this analysis?)  
