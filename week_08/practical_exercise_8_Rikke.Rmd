@@ -215,7 +215,7 @@ Pas 2 har større udsving :)
     i. We'll start with a binary problem - create a new array called `data_1_2` that only contains PAS responses 1 and 2. Similarly, create a `y_1_2` for the target vector  
 ```{python}
 #create a new array called `data_1_2` 
-data_1_2 =  np.concatenate((data[PAS_1], data[PAS_2]), axis=0) # 3D
+data_1_2 = np.concatenate((data[PAS_1], data[PAS_2]), axis=0) # 3D
 data_1_2.shape
 data_1_2.ndim
 
@@ -226,7 +226,6 @@ for i in range(len(y)):
         y_1_2.append(1)
     if y[i] == 2:
         y_1_2.append(2) #append real numbers and not indices
-        
 ```
 
 ii. Scikit-learn expects our observations (`data_1_2`) to be in a 2d-array, which has samples (repetitions) on dimension 1 and features (predictor variables) on dimension 2. Our `data_1_2` is a three-dimensional array. Our strategy will be to collapse our two last dimensions (sensors and time) into one dimension, while keeping the first dimension as it is (repetitions). Use `np.reshape` to create a variable `X_1_2` that fulfils these criteria.  
@@ -256,8 +255,8 @@ We could suspect that we are overfitting because we do not penalize.
 ```{python}
 # Do a standard `LogisticRegression` 
 from sklearn.linear_model import LogisticRegression #importing 
-logR = LogisticRegression(penalty ='none')#renaming stuff for simplicity
-logR.fit(scaled_X_1_2, y_1_2)
+logR = LogisticRegression(penalty ='none') #specifying stuff in model
+logR.fit(scaled_X_1_2, y_1_2) #actually fitting the model
 
 #Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
 logR.score(scaled_X_1_2, y_1_2) # 1.0
@@ -271,8 +270,8 @@ After applying L1 penalty 217 of my coefficients are non-zero which makes sense 
 ```{python}
 # Do a standard `LogisticRegression` - this time use penalty 'L1' (LASSO)
 from sklearn.linear_model import LogisticRegression #importing 
-logR_L1 = LogisticRegression(penalty ='l1', solver = "liblinear", random_state= 1) #renaming stuff for simplicity
-logR_L1.fit(scaled_X_1_2, y_1_2) 
+logR_L1 = LogisticRegression(penalty ='l1', solver = "liblinear", random_state= 1) #specifying stuff in model
+logR_L1.fit(scaled_X_1_2, y_1_2)  #actually fitting the model
 
 #Use the `score` method of `LogisticRegression` to find out how many labels were classified correctly. 
 logR_L1.score(scaled_X_1_2, y_1_2) # still 1.0 
@@ -299,7 +298,6 @@ plt.imshow(covariance_matrix_1)
 plt.show()
 ```
 
-
 2) Now, we are going to build better (more predictive) models by using cross-validation as an outcome measure    
     i. Import `cross_val_score` and `StratifiedKFold` from `sklearn.model_selection`  
 ```{python}
@@ -310,11 +308,10 @@ from sklearn.model_selection import cross_val_score #importing stuff 2
 
 ii. To make sure that our training data sets are not biased to one target (PAS) or the other, create `y_1_2_equal`, which should have an equal number of each target. Create a similar `X_1_2_equal`. The function `equalize_targets_binary` in the code chunk associated with Exercise 2.2.ii can be used. Remember to scale `X_1_2_equal`!  
 ```{python}
-
-
-
-
-
+# Create `y_1_2_equal`, which should have an equal number of each target
+#vi skal have 107 PAS 1 og 107 PAS 2
+y_1_2= np.array(y_1_2) #make y_1_2 into an array in order to make the function below run
+  
 
 # Exercise 2.2.ii
 def equalize_targets_binary(data, y):
@@ -340,23 +337,44 @@ def equalize_targets_binary(data, y):
     return new_data, new_y
 
 
+X_1_2_equal, y_1_2_equal = equalize_targets_binary(data_1_2, y_1_2) #make that code spinnnnn 
+y_1_2_equal.shape #check that dope data out (1 dim)
+X_1_2_equal.shape #check that dope data out (3 dim)
 
-#create `y_1_2_equal`, which should have an equal number of each target
-y_1_2_equal = 
-
-# Create a similar `X_1_2_equal`
-X_1_2_equal = 
+#rehape X_1_2_equal from 3D to 2D
+X_1_2_equal= X_1_2_equal.reshape(198,-1) # now it's 2D
+X_1_2_equal.ndim
 
 #Scale X_1_2_equal
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 scaled_X_1_2_equal = scaler.fit_transform(X_1_2_equal)
 scaled_X_1_2_equal.shape
-```
 
+```
 
 iii. Do cross-validation with 5 stratified folds doing standard `LogisticRegression` (See Exercise 2.1.iv)  
 ```{python}
+#first make standard logistic regression
+from sklearn.linear_model import LogisticRegression #importing 
+logR_standard = LogisticRegression(penalty ='none') #specifying stuff in model
+logR_standard.fit(scaled_X_1_2_equal, y_1_2_equal) #actually fitting the model
+
+#import packages
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+cv = StratifiedKFold() #abbriviation for simplicity
+
+scaled_X_1_2_equal # our X (standardized)
+y_1_2_equal # our y
+
+scores = cross_val_score(logR_standard, scaled_X_1_2_equal, y_1_2_equal, cv=cv)
+print(np.mean(scores)) #0.4746153846153846
+
+logR_l2 = LogisticRegression(C=10)
+scores_l2 = cross_val_score(logR_l2, X_std, y, cv=cv)
+print(np.mean(scores_l2))
+
+
 
 ```
 
@@ -369,6 +387,9 @@ iv. Do L2-regularisation with the following `Cs=  [1e5, 1e1, 1e-5]`. Use the sam
     v. Instead of fitting a model on all `n_sensors * n_samples` features, fit  a logistic regression (same kind as in Exercise 2.2.iv (use the `C` that resulted in the best prediction)) for __each__ time sample and use the same cross-validation as in Exercise 2.2.iii. What are the time points where classification is best? Make a plot with time on the x-axis and classification score on the y-axis with a horizontal line at the chance level (what is the chance level for this analysis?)  
     vi. Now do the same, but with L1 regression - set `C=1e-1` - what are the time points when classification is best? (make a plot)?  
     vii. Finally, fit the same models as in Exercise 2.2.vi but now for `data_1_4` and `y_1_4` (create a data set and a target vector that only contains PAS responses 1 and 4). What are the time points when classification is best? Make a plot with time on the x-axis and classification score on the y-axis with a horizontal line at the chance level (what is the chance level for this analysis?)  
+    
+    
+
 3) Is pairwise classification of subjective experience possible? Any surprises in the classification accuracies, i.e. how does the classification score fore PAS 1 vs 4 compare to the classification score for PAS 1 vs 2?  
 
 
