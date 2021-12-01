@@ -14,7 +14,7 @@ output:
 }
 </style>
 
-```{r}
+```{r, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #packages
 pacman::p_load(reticulate, Rcpp)
 
@@ -37,7 +37,7 @@ REMEMBER: This is Assignment 3 and will be part of your final portfolio
 The files `megmag_data.npy` and `pas_vector.npy` can be downloaded here (http://laumollerandersen.org/data_methods_3/megmag_data.npy) and here (http://laumollerandersen.org/data_methods_3/pas_vector.npy)   
 
 1) Load `megmag_data.npy` and call it `data` using `np.load`. You can use `join`, which can be imported from `os.path`, to create paths from different string segments  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #packages in python
 import numpy as np
 import pandas as pd
@@ -46,16 +46,14 @@ plt.rcParams['figure.dpi'] = 300 # HIGH DPI PLOTS PLEASE
 
 data = np.load("megmag_data.npy")
 data.shape #inspect the data (number of dimensions = 3) 
-#we have 682 = number of repetitions of a visual stimulus, 102 = the second dimension is the number of sensors,  251 =the third dimension is the number of time samples) 
 ```
 
 
 i. The data is a 3-dimensional array. The first dimension is number of repetitions of a visual stimulus , the second dimension is the number of sensors that record magnetic fields (in Tesla) that stem from neurons activating in the brain, and the third dimension is the number of time samples. How many repetitions, sensors and time samples are there?  
     ii. The time range is from (and including) -200 ms to (and including) 800 ms with a sample recorded every 4 ms. At time 0, the visual stimulus was briefly presented. Create a 1-dimensional array called `times` that represents this.  
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #make a vector fra -200 til 800, den har en værdi hvert 4. milisekund
-#dvs et spænd på 1000 (fra -200 til 800, med en optagelse hver 4 sek = )
 times = np.arange(-200, 801, 4)
 ```
     
@@ -65,7 +63,7 @@ iii. Create the sensor covariance matrix $\Sigma_{XX}$: $$\Sigma_{XX} = \frac 1 
 We see some covariance sporadically distributed in the sensor covariance matrix, this suggests that they do not really pick up independent signals. 
 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #     iii. Create the sensor covariance matrix 
 #calculating the dot product for all rows i using all datapoints in the dimensions
 covariance_matrix = []
@@ -83,20 +81,24 @@ import matplotlib.pyplot as plt
 plt.figure()
 plt.imshow(covariance_matrix,cmap = "hot")
 plt.colorbar()
+plt.xlabel("sensors")
+plt.ylabel("sensors")
+plt.title("sensor covariance matrix")
 plt.show()
 ```
 
 iv. Make an average over the repetition dimension using `np.mean` - use the `axis` argument. (The resulting array should have two dimensions with time as the first and magnetic field as the second)  
 
-```{python}
-avr_rep = np.mean(data, axis=0) # repetition of visual stimulus :)) 
-avr_rep.shape #inspect, vi har 102 elementer (avrg repetition across sensors) i col 1 og 251 elementer (avrg repetition across time)) i col 2. I hver 
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+#Make an average over the repetition dimension using `np.mean` 
+avr_rep = np.mean(data, axis=0) # repetition of visual stimulus
+avr_rep.shape 
 ```
 
 
 v. Plot the magnetic field (based on the average) as it evolves over time for each of the sensors (a line for each) (time on the x-axis and magnetic field on the y-axis). Add a horizontal line at $y = 0$ and a vertical line at $x = 0$ using `plt.axvline` and `plt.axhline`  
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 import matplotlib.pyplot as plt
 
 #Plot
@@ -111,7 +113,7 @@ plt.show()
 ```
 
 vi. Find the maximal magnetic field in the average. Then use `np.argmax` (Returns the indices of the maximum values along an axis.) and `np.unravel_index` to find the sensor that has the maximal magnetic field.  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #the maximal magnetic field in the average
 maxiking = np.unravel_index(np.argmax(avr_rep), avr_rep.shape)
 print(maxiking) # sensor nr 73 at repetition 112 got the maximum magnetic field 
@@ -122,7 +124,7 @@ np.amax(avr_rep) #2.7886216843591933e-13 # the maximum value in the average (SAM
 
 
 vii. Plot the magnetic field for each of the repetitions (a line for each) for the sensor that has the maximal magnetic field (sensor 73). Highlight the time point with the maximal magnetic field in the average (as found in 1.1.v) using `plt.axvline`  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #Plot the magnetic field for each of the repetitions (a line for each) for the sensor that has the maximal magnetic field (sensor 73)
 plt.figure()
 plt.plot(times, data[:,73,:].T)
@@ -141,7 +143,7 @@ times[112]
 
 viii. Describe in your own words how the response found in the average is represented in the single repetitions. But do make sure to use the concepts _signal_ and _noise_ and comment on any differences on the range of values on the y-axis  
 
-In the plot above we see each single repetition of visual stimuli (682 repetitions) for sensor 73. The individual repetitions contains a lot of noise (I assume that the noise is the squiggles, but honestly I don't know much about MEG data). The response found in the average plot (2.1 v (Plot the magnetic field (based on the average))) where we see a large peak around time 112/248ms (marked with a black line), is also visualized in the plot above where we see a little concave curve around time 112/248ms as well.I would say the plot in exercise 2.1 v (Plot the magnetic field (based on the average)) is more informative since the signals are based on an average per sensor, which makes it easier to distinguish the between them. 
+In the plot above we see each single repetition of visual stimuli (682 repetitions) for sensor 73. The individual repetitions contains a lot of noise (I assume that the noise is the squiggles, but honestly I don't know much about MEG data). The response found in the average plot (2.1 v (Plot the magnetic field (based on the average))) where we see a large peak around time 112/248ms (marked with a black line), is also visualized in the plot above where we see a little concave curve around time 112/248ms as well. I would say the plot in exercise 2.1 v (Plot the magnetic field (based on the average)) is more informative since the signals are based on an average per sensor, which makes it easier to distinguish the between them. 
 
 
 2) Now load `pas_vector.npy` (call it `y`). PAS is the same as in Assignment 2, describing the clarity of the subjective experience the subject reported after seeing the briefly presented stimulus
@@ -149,7 +151,7 @@ i. Which dimension in the `data` array does it have the same length as?
 
 The new y value we just imported, which reflects PAS-ratings (perceptual awareness scale), has the same length as number of repetitions of a visual stimulus. Meaning that for each visual stimulus there is a PAS-rating. 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #load data
 y = np.load("pas_vector.npy")
 len(y)
@@ -158,11 +160,10 @@ len(y)
 
 ii. Now make four averages (As in Exercise 1.1.iii), one for each PAS rating, and plot the four time courses (one for each PAS rating) for the sensor found in Exercise 1.1.v 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #subset sensor 73
 sensor_73 = data[:,73,:]
 
-len(y)
 # Now make four averages (As in Exercise 1.1.iii), one for each PAS rating
 #PAS 1
 PAS_1= np.where(y == 1) #finding out where pas ratings are
@@ -214,7 +215,7 @@ We see PAS 1 as being quite lower than the other PAS ratings throughout the time
 
 1) Now, we are going to do Logistic Regression with the aim of classifying the PAS-rating given by the subject
     i. We'll start with a binary problem - create a new array called `data_1_2` that only contains PAS responses 1 and 2. Similarly, create a `y_1_2` for the target vector  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #create a new array called `data_1_2` 
 data_1_2 = np.concatenate((data[PAS_1], data[PAS_2]), axis=0) # 3D
 data_1_2.shape
@@ -230,17 +231,13 @@ for i in range(len(y)):
 ```
 
 ii. Scikit-learn expects our observations (`data_1_2`) to be in a 2d-array, which has samples (repetitions) on dimension 1 and features (predictor variables) on dimension 2. Our `data_1_2` is a three-dimensional array. Our strategy will be to collapse our two last dimensions (sensors and time) into one dimension, while keeping the first dimension as it is (repetitions). Use `np.reshape` to create a variable `X_1_2` that fulfils these criteria.  
-```{python}
-#collapse our two last dimensions (sensors and time) into one dimension, while keeping the first dimension as it is (repetitions). Use `np.reshape` to create a variable `X_1_2` that fulfils these criteria.  
-
-#dim 1: repetition[dim 0]
-# dim 2: sensor & time [dim 1-2]
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 X_1_2= data_1_2.reshape(data_1_2.shape[0],(data_1_2.shape[1]*data_1_2.shape[2]))
 X_1_2.shape  #we actually just reduced dim 1 & 2 together by multiplying them :))
 ```
 
 iii. Import the `StandardScaler` and scale `X_1_2`  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 scaled_X_1_2 = scaler.fit_transform(X_1_2)
@@ -252,7 +249,7 @@ iv. Do a standard `LogisticRegression` - can be imported from `sklearn.linear_mo
 
 We could suspect that we are overfitting, because the score is perfect with an prediction accuracy of 100%. Also, we test the model on the data we fitted it with. In order to evaluate the model, we would have to see how good then model predicts new data. 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # Do a standard `LogisticRegression` 
 from sklearn.linear_model import LogisticRegression #importing 
 logR = LogisticRegression(penalty ='none') #specifying stuff in model
@@ -266,7 +263,7 @@ vi. Now apply the _L1_ penalty instead - how many of the coefficients (`.coef_`)
 
 After applying L1 penalty 217 of my coefficients are non-zero. 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # Do a standard `LogisticRegression` - this time use penalty 'L1' (LASSO)
 from sklearn.linear_model import LogisticRegression #importing 
 logR_L1 = LogisticRegression(penalty ='l1', solver = "liblinear", random_state= 1) #specifying stuff in model
@@ -282,9 +279,9 @@ print(np.sum(logR_L1.coef_ !=0))
 vii. Create a new reduced $X$ that only includes the non-zero coefficients - show the covariance of the non-zero features (two covariance matrices can be made; $X_{reduced}X_{reduced}^T$ or $X_{reduced}^TX_{reduced}$ (you choose the right one)) . Plot the covariance of the features using `plt.imshow`. Compared to the plot from 1.1.iii, do we see less covariance?  
 
 
-It looks like there is bit more covariance in this covariance matrix compared to the plot from 1.1.iii. (?)
+It looks like there is bit more positive covariance () in this covariance matrix compared to the plot from 1.1.iii. But honestly, it's a little hard to compare, when we have two matrices with variables on different scales. 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #### Create a new reduced $X$ that only includes the non-zero coefficients
 coefs = logR_L1.coef_.flatten() #makes 2D to list
 non_zero = coefs!= 0 #isolate coefficients that are  non-zero
@@ -298,22 +295,32 @@ covariance_matrix_1.shape #now its (217,217)
 import matplotlib.pyplot as plt
 plt.figure()
 plt.imshow(covariance_matrix_1, cmap = "hot")
+plt.title("covariance of the non-zero features")
 plt.colorbar()
+plt.show()
+
+
+#plotting the covariance matrix (from earlier)
+plt.figure()
+plt.imshow(covariance_matrix,cmap = "hot")
+plt.colorbar()
+plt.xlabel("sensors")
+plt.ylabel("sensors")
+plt.title("sensor covariance matrix")
 plt.show()
 ```
 
 2) Now, we are going to build better (more predictive) models by using cross-validation as an outcome measure    
     i. Import `cross_val_score` and `StratifiedKFold` from `sklearn.model_selection`  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # importing functions
 from sklearn.model_selection import StratifiedKFold 
 from sklearn.model_selection import cross_val_score 
 ```
 
 ii. To make sure that our training data sets are not biased to one target (PAS) or the other, create `y_1_2_equal`, which should have an equal number of each target (i.e same number of PAS 1 ratings and PAS 2 ratings, and not 99 and 115). Create a similar `X_1_2_equal`. The function `equalize_targets_binary` in the code chunk associated with Exercise 2.2.ii can be used. Remember to scale `X_1_2_equal`!  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # Create `y_1_2_equal`, which should have an equal number of each target
-#vi skal have 107 PAS 1 og 107 PAS 2
 y_1_2= np.array(y_1_2) #make y_1_2 into an array in order to make the function below run
 
 # Exercise 2.2.ii
@@ -340,11 +347,11 @@ def equalize_targets_binary(data, y):
     return new_data, new_y
 
 
-data_1_2_equal, y_1_2_equal = equalize_targets_binary(data_1_2, y_1_2) #make that code spinnnnn 
-y_1_2_equal.shape #check that dope data out (1 dim)
-data_1_2_equal.shape #check that dope data out (3 dim)
+data_1_2_equal, y_1_2_equal = equalize_targets_binary(data_1_2, y_1_2) 
+y_1_2_equal.shape
+data_1_2_equal.shape
 
-#rehape data_1_2_equa from 3D to X_1_2_equal 2D
+#rehape data_1_2_equal from 3D to X_1_2_equal 2D
 X_1_2_equal= data_1_2_equal.reshape(198,-1) # now it's 2D (doing -1 takes everything else than )
 X_1_2_equal.ndim
 
@@ -353,11 +360,10 @@ from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 scaled_X_1_2_equal = scaler.fit_transform(X_1_2_equal)
 scaled_X_1_2_equal.shape
-
 ```
 
 iii. Do cross-validation with 5 stratified folds doing standard `LogisticRegression` (See Exercise 2.1.iv)  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #first make standard logistic regression
 from sklearn.linear_model import LogisticRegression #importing 
 logR_standard = LogisticRegression(penalty ='none') #specifying stuff in model
@@ -379,7 +385,7 @@ iv. Do L2-regularisation with the following `Cs=  [1e5, 1e1, 1e-5]`. Use the sam
 
 The best model has a C = 1e-5.
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 ############### L2 with C=1e5 (10.0000)
 logR_L2_1 = LogisticRegression(C=1e5, penalty ='l2', solver = "liblinear", random_state= 1) #specifying stuff in model
 logR_L2_1.fit(scaled_X_1_2_equal, y_1_2_equal)  #actually fitting the model
@@ -387,8 +393,7 @@ logR_L2_1.fit(scaled_X_1_2_equal, y_1_2_equal)  #actually fitting the model
 #Cross val score
 scores_L2_1 = cross_val_score(logR_L2_1, scaled_X_1_2_equal, y_1_2_equal, cv=5) #cv = 5 is 5 folds
 print(np.mean(scores_L2_1)) #0.46987179487179487
-
-scores_L2_1 # 5 values cuz we cross validate 5 times
+#scores_L2_1 # 5 values cuz we cross validate 5 times
 
 
 
@@ -399,8 +404,7 @@ logR_L2_2.fit(scaled_X_1_2_equal, y_1_2_equal)  #actually fitting the model
 #Cross val score
 scores_L2_2 = cross_val_score(logR_L2_2, scaled_X_1_2_equal, y_1_2_equal, cv=5) #cv = 5 is 5 folds
 print(np.mean(scores_L2_2)) #0.47000000000000003
-
-scores_L2_2 # 5 values cuz we cross validate 5 times
+#scores_L2_2 # 5 values cuz we cross validate 5 times
 
 
 
@@ -411,8 +415,7 @@ logR_L2_3.fit(scaled_X_1_2_equal, y_1_2_equal)  #actually fitting the model
 #Cross val score
 scores_L2_3 = cross_val_score(logR_L2_3, scaled_X_1_2_equal, y_1_2_equal, cv=5) #cv = 5 is 5 folds
 print(np.mean(scores_L2_3)) #0.4805128205128205
-
-scores_L2_3 # 5 values cuz we cross validate 5 times
+#scores_L2_3 # 5 values cuz we cross validate 5 times
 
 
 #In the best-scoring of these models, how many more/fewer predictions are correct (on average)? 
@@ -441,7 +444,7 @@ for i in range(251):
 ```
 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #the maximal cross validation score from the logistic regression loop :) 
 np.amax(cv_scores) #0.5752564102564103
 
@@ -480,7 +483,7 @@ for i in range(251):
   cv_scores_l1.append(np.mean(scorez_l1)) #append to the list 'cv_scores'
 ```
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #the maximal cross validation score from the logistic regression loop :) 
 np.amax(cv_scores_l1) #0.6161538461538462
 
@@ -507,7 +510,7 @@ vii. Finally, fit the same models as in Exercise 2.2.vi but now for `data_1_4` a
 
 When fitting logistic regression on each time sample from PAS 1 and PAS 4 ratings with the model using L1 regularization with C=1e-1 (0.1), the classification is best at 112 ms (time point 78). The chance level for this analysis 50%, with two options being PAS 1 and PAS 4 ratings (with an equal amount of observations in each). 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # create a data set and a target vector that only contains PAS responses 1 and 4 (`data_1_4` and `y_1_4`)
 data_1_4 = np.concatenate((data[PAS_1], data[PAS_4]), axis=0) # 3D
 data_1_4.shape
@@ -547,9 +550,9 @@ def equalize_targets_binary(data, y):
     return new_data, new_y
 
 
-data_1_4_equal, y_1_4_equal = equalize_targets_binary(data_1_4, y_1_4) #make that code spinnnnn 
-y_1_4_equal.shape #check that dope data out (1 dim)
-data_1_4_equal.shape #check that dope data out (3 dim)
+data_1_4_equal, y_1_4_equal = equalize_targets_binary(data_1_4, y_1_4) 
+y_1_4_equal.shape 
+data_1_4_equal.shape
 
 #rehape data_1_2_equa from 3D to X_1_2_equal 2D
 X_1_4_equal= data_1_4_equal.reshape(198,-1) # now it's 2D (doing -1 takes everything else than )
@@ -578,7 +581,7 @@ for i in range(251):
 ```
 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #the maximal cross validation score from the logistic regression loop :) 
 np.amax(cv_scores_1_4) #0.6157692307692308 #almost the same as above
 
@@ -610,7 +613,7 @@ The models are not really good at classifying PAS ratings, since their scores ar
 1) Do a Support Vector Machine Classification  
     i. First equalize the number of targets using the function associated with each PAS-rating using the function associated with Exercise 3.1.i  
     
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # First equalize the number of targets using the function associated with the exercise 
 def equalize_targets(data, y):
     np.random.seed(7)
@@ -654,7 +657,7 @@ scaled_X_4.shape
     
 ii. Run two classifiers, one with a linear kernel and one with a radial basis (other options should be left at their defaults) - the number of features is the number of sensors multiplied the number of samples. Which one is better predicting the category?
     
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # now make a support vector machine (SVM)
 from sklearn.svm import SVC
 
@@ -691,7 +694,7 @@ for i in range(251):
   radial_cv_scores.append(np.mean(scorez_4)) #append to the list 'cv_scores'
 ```
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #the maximal cross validation score from the radial loop :) 
 np.amax(radial_cv_scores) #0.3586075949367088
 
@@ -724,7 +727,7 @@ Classification of PAS ratings are possible around 200-250 ms, but still only wit
 
 2) Finally, split the equalized data set (with all four ratings) into a training part and test part, where the test part if 30 % of the trials. Use `train_test_split` from `sklearn.model_selection`  
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #importing 
 from sklearn.model_selection import train_test_split
 
@@ -746,7 +749,7 @@ radial_predictions = radial_svm.predict(X_test)
 
 
 ii. Create a _confusion matrix_. It is a 4x4 matrix. The row names and the column names are the PAS-scores. There will thus be 16 entries. The PAS1xPAS1 entry will be the number of actual PAS1, $y_{pas1}$ that were predicted as PAS1, $\hat y_{pas1}$. The PAS1xPAS2 entry will be the number of actual PAS1, $y_{pas1}$ that were predicted as PAS2, $\hat y_{pas2}$ and so on for the remaining 14 entries.  Plot the matrix
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #importing
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay as cmd
 
