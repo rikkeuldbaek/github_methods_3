@@ -92,22 +92,8 @@ times = np.arange(-200, 804, 4)
 np.where(times == 248) # index 112
 
 # reduce the dimensionality of `data` from three to two dimensions by only choosing the time index corresponding to 248 ms
-data_2 = data[:,:,112] 
-data_2.shape # two dimensions now
-
-
-data_1= data.reshape(396,-1)
-data.shape
-np.isclose(data_1, data_2)
-data_1.shape
-data.shape
-
-#NOTE TO SELF
-#this is the exact same as the "reshape" above :)
-X= scaled_data.reshape(396,-1)
-
-np.isclose(X,scaled_data) #note I put in the scaled data
-
+data= data[:,:,112] 
+data.shape # two dimensions now
 ```
 
  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
@@ -195,7 +181,7 @@ i. We need to sort the eigenvectors and eigenvalues according to the absolute va
 ```{python}
 #use `np.abs` on the eigenvalues
 eigen_values= np.abs(eigen_values)
-eigen_vectors= np.abs(eigen_vectors)
+#eigen_vectors= np.abs(eigen_vectors)
 ```
 
 ii. Then, we will find the correct ordering of the indices and create an array, e.g. `sorted_indices` that contains these indices. We want to sort the values from highest to lowest. For that, use `np.argsort`, which will find the indices that correspond to sorting the values from lowest to highest. Subsequently, use `np.flip`, which will reverse the order of the indices.   
@@ -204,7 +190,6 @@ ii. Then, we will find the correct ordering of the indices and create an array, 
 #find the correct ordering of the indices and create an array, e.g. `sorted_indices` that contains these indices.
 sorted_indices= np.argsort(eigen_values)
 sorted_indices = np.flip(sorted_indices) #lowest to highest
-sorted_indices = np.flip(sorted_indices) #highest to lowest
 sorted_indices
 ```
 
