@@ -43,6 +43,8 @@ The function `equalize_targets` is supplied - this time, we will only work with 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LogisticRegression 
+from sklearn.model_selection import cross_val_score 
 
 #load data
 data = np.load("/Users/rikkeuldbaek/Desktop/Cognitive Science/3rd semester/Methods 3/github_methods_3/week_08/megmag_data.npy")
@@ -132,7 +134,8 @@ plt.show()
 
 vi. What does the off-diagonal activation imply about the independence of the signals measured by the 102 sensors? 
 
-The off-diagonal activation imply that the 102 sensors do not really pick up independent signals. 
+The off-diagonal activation imply that the 102 sensors do not really pick up independent signals. We see a lot of positive co-variation, which indicates a positive relationship, i.e. when one sensor deviates from the mean, then the other co-variated sensor deviates in the same direction.
+
  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
  
 ```{python}
@@ -164,24 +167,10 @@ eigen_vectors = np.real(eigen_vectors)
 ```
 
 2) Create the weighting matrix $W$ and the projected data, $Z$
-```{python}
-*####SOLUTION
-#Create the weighting matrix 'W'
-eigen_pairs = [(np.abs(eigen_values[i]), eigen_vectors[:, i]) for i in range(len(eigen_values))]
-eigen_pairs.sort(reverse=True)
-
-W = np.hstack((eigen_pairs[0][1][:, np.newaxis],
-               eigen_pairs[1][1][:, np.newaxis]))
-               
-#Create the projected data 'Z'
-Z  = scaled_data @ W
-```
-
 i. We need to sort the eigenvectors and eigenvalues according to the absolute values of the eigenvalues (use `np.abs` on the eigenvalues).  
 ```{python}
 #use `np.abs` on the eigenvalues
 eigen_values= np.abs(eigen_values)
-#eigen_vectors= np.abs(eigen_vectors)
 ```
 
 ii. Then, we will find the correct ordering of the indices and create an array, e.g. `sorted_indices` that contains these indices. We want to sort the values from highest to lowest. For that, use `np.argsort`, which will find the indices that correspond to sorting the values from lowest to highest. Subsequently, use `np.flip`, which will reverse the order of the indices.   
@@ -206,7 +195,7 @@ eigen_vectors = eigen_vectors[:,sorted_indices]
 
 iv. Plot the log, `np.log`, of the eigenvalues, `plt.plot(np.log(eigenvalues), 'o')` - are there some values that stand out from the rest? In fact, 5 (noise) dimensions have already been projected out of the data - how does that relate to the matrix rank (Exercise 1.1.vii)  
 
-Yes 5 values stand out from the rest. When looking at the sorted_indices it is evident that the first 5 numbers are positive numbers, contrary to the rest 97 numbers that are negative.
+Yes 5 values stand out from the rest. When looking at the sorted_indices it is evident that the last 5 values are much more negative (-35 to -39) than the rest 97 values.
  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
 
 ```{python}
@@ -215,7 +204,7 @@ plt.figure()
 plt.plot(np.log(eigen_values), 'rx')
 plt.title("np.log of eigen values'")
 plt.ylabel("log(eigen values)")
-plt.xlabel("sensors")
+plt.xlabel("principle components")
 plt.show()
 
 #rank of matrix
@@ -225,43 +214,33 @@ eigen_values[sorted_indices] # 5 first values are
 #logged version for interpretation
 log_eigen = np.log(eigen_values)
 log_eigen[sorted_indices]
-
 ```
 
 v. Create the weighting matrix, `W` (it is the sorted eigenvectors)  
 ```{python}
 #Create the weighting matrix, `W`
-W_eigen_vectors = eigen_vectors[:,sorted_indices]
+W = eigen_vectors[:,sorted_indices]
 ```
 
 vi. Create the projected data, `Z`, $Z = XW$ - (you can check you did everything right by checking whether the $X$ you get from $X = ZW^T$ is equal to your original $X$, `np.isclose` may be of help)'
 ```{python}
 #Create the projected data, `Z`
-Z  = scaled_data @ W_eigen_vectors #remember my scaled data is the same as my reshaped X
-#np.isclose(X, scaled_data) # de her er true
+Z  = scaled_data @ W #where scaled data is my X
 
 #check But bro does not make sense 
-X_check = Z @ W_eigen_vectors.T #how to make X
-np.isclose(X_check, scaled_data)  # needs to be TRUE, but shit's FALSE.. 
+X_check = Z @ W.T #how to make X
+np.isclose(X_check, scaled_data)  # needs to be TRUE,
 ```
- *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
- MAJOR PROBLEM WTF... :( rip miv
 
 
 vii. Create a new covariance matrix of the principal components (n=102) - plot it! What has happened off-diagonal and why?
 
 The sporadic off-diagonal activation has been reduced efficiently.
-
  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
 ```{python}
-################################ what ???
-
-len(Z) #projected data
-
-
 # Create the eigen covariance matrix 
-eigen_cov_mat = np.cov(W_eigen_vectors.T) ##WHAT ???
+eigen_cov_mat = np.cov(W.T)
 
 #plot the eigen cov_mat of the principal components (n=102)
 import matplotlib.pyplot as plt
@@ -279,20 +258,82 @@ plt.show()
 
 
 
-
-
 # EXERCISE 2 - Use logistic regression with cross-validation to find the optimal number of principal components  
 
 1) We are going to run logistic regression with in-sample validation 
-    i. First, run standard logistic regression (no regularization) based on $Z_{d \times k}$ and `y` (the target vector). Fit (`.fit`) 102 models based on: $k = [1, 2, ..., 101, 102]$ and $d = 102$. For each fit get the classification accuracy, (`.score`), when applied to $Z_{d \times k}$ and $y$. This is an in-sample validation. Use the solver `newton-cg` if the default solver doesn't converge
-    ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - what is the general trend and why is this so?
-    iii. In terms of classification accuracy, what is the effect of adding the five last components? Why do you think this is so?
+    i. First, run standard logistic regression (no regularization) based on $Z_{d \times k}$ and `y` (the target vector). Fit (`.fit`) 102 models based on: $k = [1, 2, ..., 101, 102]$ and $d = 102$. For each fit get the classification accuracy, (`.score`), when applied to $Z_{d \times k}$ and $y$. This is an in-sample validation. Use the solver `newton-cg` if the default solver doesn't converge'
+    
+```{python, results = false}
+## run logistic regression with in-sample validation 
+scores_1 = []
+logReg = LogisticRegression(penalty ='none', solver= 'newton-cg', random_state=1) 
+
+#loop through 102 models NORMAL SCORE
+for i in range(102):
+  logReg.fit(Z[:,0:i+1], y) #
+  fit_score = logReg.score(Z[:,0:i+1], y)
+  scores_1.append(fit_score)
+```
+
+
+ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - what is the general trend and why is this so?
+
+```{python}
+#plot, x=  principal components (102), y= classification accuracy
+plt.figure()
+plt.plot(scores_1)
+plt.xlabel("principal components")
+plt.ylabel("classification accuracy score")
+plt.title("Classification accuracy score given principal component")
+plt.show()
+```
+    
+
+iii. In terms of classification accuracy, what is the effect of adding the five last components? Why do you think this is so?
+
+Adding the five last components have very little effect as visualised in the plot. This is because they have projected out of the data .... (???)
+
+ *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+
+```{python}
+
+```
+    
+
 2) Now, we are going to use cross-validation - we are using `cross_val_score` and `StratifiedKFold` from `sklearn.model_selection`
-    i. Define the variable: `cv = StratifiedKFold()` and run `cross_val_score` (remember to set the `cv` argument to your created `cv` variable). Use the same `estimator` in `cross_val_score` as in Exercise 2.1.i. Find the mean score over the 5 folds (the default of `StratifiedKFold`) for each $k$, $k = [1, 2, ..., 101, 102]$  
-    ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - how is this plot different from the one in Exercise 2.1.ii?
-    iii. What is the number of principal components, $k_{max\_accuracy}$, that results in the greatest classification accuracy when cross-validated?  
-    iv. How many percentage points is the classification accuracy increased with relative to the to the full-dimensional, $d$, dataset 
-    v. How do the analyses in Exercises 2.1 and 2.2 differ from one another? Make sure to comment on the differences in optimization criteria.  
+i. Define the variable: `cv = StratifiedKFold()` and run `cross_val_score` (remember to set the `cv` argument to your created `cv` variable). Use the same `estimator` in `cross_val_score` as in Exercise 2.1.i. Find the mean score over the 5 folds (the default of `StratifiedKFold`) for each $k$, $k = [1, 2, ..., 101, 102]$  
+```{python}
+
+
+
+
+```
+    
+
+ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - how is this plot different from the one in Exercise 2.1.ii?
+```{python}
+
+```
+    
+
+iii. What is the number of principal components, $k_{max\_accuracy}$, that results in the greatest classification accuracy when cross-validated?  
+```{python}
+
+```
+    
+
+iv. How many percentage points is the classification accuracy increased with relative to the to the full-dimensional, $d$, dataset 
+```{python}
+
+```
+    
+
+v. How do the analyses in Exercises 2.1 and 2.2 differ from one another? Make sure to comment on the differences in optimization criteria.
+```{python}
+
+```
+    
+
 3) We now make the assumption that $k_{max\_accuracy}$ is representative for each time sample (we only tested for 248 ms). We will use the PCA implementation from _scikit-learn_, i.e. import `PCA` from `sklearn.decomposition`.
     i. For __each__ of the 251 time samples, use the same estimator and cross-validation as in Exercises 2.1.i and 2.2.i. Run two analyses - one where you reduce the dimensionality to $k_{max\_accuracy}$ dimensions using `PCA` and one where you use the full data. Remember to scale the data (for now, ignore if you get some convergence warnings - you can try to increase the number of iterations, but this is not obligatory)  
     ii. Plot the classification accuracies for each time sample for the analysis with PCA and for the one without in the same plot. Have time (ms) on the _x_-axis and classification accuracy on the _y_-axis 
