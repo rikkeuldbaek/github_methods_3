@@ -45,6 +45,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression 
 from sklearn.model_selection import cross_val_score 
+from sklearn.model_selection import StratifiedKFold 
+
 
 #load data
 data = np.load("/Users/rikkeuldbaek/Desktop/Cognitive Science/3rd semester/Methods 3/github_methods_3/week_08/megmag_data.npy")
@@ -97,11 +99,6 @@ np.where(times == 248) # index 112
 data= data[:,:,112] 
 data.shape # two dimensions now
 ```
-
- *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
- giver det mening at reduce dimensionality of data sådan her ^
- Eller skal jeg reshape det into X, som jeg så skal scale?
- 
 
 
 iv. Scale the data using `StandardScaler` 
@@ -207,13 +204,9 @@ plt.ylabel("log(eigen values)")
 plt.xlabel("principle components")
 plt.show()
 
-#rank of matrix
-print(sorted_indices)
-eigen_values[sorted_indices] # 5 first values are 
-
 #logged version for interpretation
 log_eigen = np.log(eigen_values)
-log_eigen[sorted_indices]
+log_eigen[sorted_indices] #the five last values are extremely negative
 ```
 
 v. Create the weighting matrix, `W` (it is the sorted eigenvectors)  
@@ -236,23 +229,26 @@ np.isclose(X_check, scaled_data)  # needs to be TRUE,
 vii. Create a new covariance matrix of the principal components (n=102) - plot it! What has happened off-diagonal and why?
 
 The sporadic off-diagonal activation has been reduced efficiently.
+There is almost no covariance left in the matrix of the principal components, i.e most of the 102 principal components do not explain the same variance. 
+
+If they explained the same variance, we wouldn't use them, we'd want them to explain different things. 
+
  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
 ```{python}
 # Create the eigen covariance matrix 
-eigen_cov_mat = np.cov(W.T)
+eigen_cov_mat = np.cov(Z.T)
 
 #plot the eigen cov_mat of the principal components (n=102)
 import matplotlib.pyplot as plt
 
 plt.figure()
-plt.imshow(eigen_cov_mat,cmap = "hot")
+plt.imshow(eigen_cov_mat)
 plt.colorbar()
 plt.title("Covariance matrix of the principal components (n=102)")
 plt.xlabel('Principal Components')
 plt.ylabel('Principal Components')
 plt.show()
-
 ```
 
 
@@ -273,18 +269,23 @@ for i in range(102):
   logReg.fit(Z[:,0:i+1], y) #
   fit_score = logReg.score(Z[:,0:i+1], y)
   scores_1.append(fit_score)
+
+
+# minimum and maximum values
+np.min(scores_1)
+np.max(scores_1)
 ```
 
 
 ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - what is the general trend and why is this so?
 
 ```{python}
-#plot, x=  principal components (102), y= classification accuracy
+#plot 1 (only logistic regression), x=  principal components (102), y= classification accuracy
 plt.figure()
 plt.plot(scores_1)
 plt.xlabel("principal components")
 plt.ylabel("classification accuracy score")
-plt.title("Classification accuracy score given principal component")
+plt.title("Plot 1. Classification accuracy score given principal component")
 plt.show()
 ```
     
@@ -297,45 +298,113 @@ Adding the five last components have very little effect as visualised in the plo
 
 ```{python}
 
+
+
 ```
     
 
 2) Now, we are going to use cross-validation - we are using `cross_val_score` and `StratifiedKFold` from `sklearn.model_selection`
 i. Define the variable: `cv = StratifiedKFold()` and run `cross_val_score` (remember to set the `cv` argument to your created `cv` variable). Use the same `estimator` in `cross_val_score` as in Exercise 2.1.i. Find the mean score over the 5 folds (the default of `StratifiedKFold`) for each $k$, $k = [1, 2, ..., 101, 102]$  
+```{python, results = false}
+# Define the variable: `cv = StratifiedKFold()`
+cv = StratifiedKFold(n_splits=5) 
+
+## use cross-validation this time
+cv_scores = []
+logReg = LogisticRegression(penalty ='none', solver= 'newton-cg', random_state=1) 
+
+#loop through 102 models NORMAL SCORE
+for i in range(102):
+  logReg.fit(Z[:,0:i+1], y) 
+  cross_val_scores = cross_val_score(logReg, Z[:,0:i+1], y, cv=cv) #cv being 5
+  cv_scores.append(np.mean(cross_val_scores))
+```
+
 ```{python}
-
-
-
+# minimum and maximum values
+np.min(cv_scores)
+np.max(cv_scores)
 
 ```
     
 
 ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - how is this plot different from the one in Exercise 2.1.ii?
-```{python}
 
+In plot 1 it looks like the classification accuracy score gradually becomes better when adding a principle component at each fit. Using cross validation when fitting the logistic regression, plot 2 shows a more accurate distribution of the classification accuracy score for the principle components, since we cross validate with 5 folds, and therefore let the model train and test 5 times on different parts of the data . This way we get a better indication of how well our model will perform on data it has not seen before, unlike running logistic regression with in-sample validation. 
+Note, the scale of classification score on the y-axis is very different from plot 1 and plot 2, in plot 1 it ranges from around 0.27 to 0.63, while in plot 2 it ranges from 0.23 to 0.37.
+
+ *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+
+```{python}
+#plot 2 (using cross validation), x=  principal components (102), y= classification accuracy
+plt.figure()
+plt.plot(cv_scores)
+plt.axvline(np.argmax(cv_scores), color= "red") 
+plt.xlabel("principal components")
+plt.ylabel("classification accuracy score")
+plt.title("Plot 2. Classification accuracy score given principal component, using CV")
+plt.show()
 ```
     
 
 iii. What is the number of principal components, $k_{max\_accuracy}$, that results in the greatest classification accuracy when cross-validated?  
-```{python}
 
+The first 16 principle components (indexed from 0) result in the greatest classification accuracy when cross-validated. 
+
+```{python}
+#the maximal cross validation score the model
+np.amax(cv_scores) #0.3688291139240506
+np.argmax(cv_scores)  # PC 15 
 ```
     
 
 iv. How many percentage points is the classification accuracy increased with relative to the to the full-dimensional, $d$, dataset 
-```{python}
 
+The increase of classification accuracy in percentage points is 7%. 
+
+```{python}
+# Runing cross validation model on full dimensional data
+full_data_cv_scores = cross_val_score(logReg, scaled_data, y, cv=cv)
+np.mean(full_data_cv_scores) #0.2903164556962025
+
+#the maximal cross validation score the model (for comparison)
+np.amax(cv_scores) #0.3688291139240506
+
+#increase of classification accuracy in percentage points
+np.amax(cv_scores) -np.mean(full_data_cv_scores)  #0.07851265822784809
 ```
     
 
 v. How do the analyses in Exercises 2.1 and 2.2 differ from one another? Make sure to comment on the differences in optimization criteria.
+
+ *!!!!!!!!!!!!!!!!!!!!!!!!!! what do you mean lau <3 <<3!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+   *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+
 ```{python}
 
 ```
     
 
 3) We now make the assumption that $k_{max\_accuracy}$ is representative for each time sample (we only tested for 248 ms). We will use the PCA implementation from _scikit-learn_, i.e. import `PCA` from `sklearn.decomposition`.
-    i. For __each__ of the 251 time samples, use the same estimator and cross-validation as in Exercises 2.1.i and 2.2.i. Run two analyses - one where you reduce the dimensionality to $k_{max\_accuracy}$ dimensions using `PCA` and one where you use the full data. Remember to scale the data (for now, ignore if you get some convergence warnings - you can try to increase the number of iterations, but this is not obligatory)  
-    ii. Plot the classification accuracies for each time sample for the analysis with PCA and for the one without in the same plot. Have time (ms) on the _x_-axis and classification accuracy on the _y_-axis 
-    iii. Describe the differences between the two analyses - focus on the time interval between 0 ms and 400 ms - describe in your own words why the logistic regression performs better on the PCA-reduced dataset around the peak magnetic activity  
+
+i. For __each__ of the 251 time samples, use the same estimator and cross-validation as in Exercises 2.1.i and 2.2.i. Run two analyses - one where you reduce the dimensionality to $k_{max\_accuracy}$ dimensions using `PCA` and one where you use the full data. Remember to scale the data (for now, ignore if you get some convergence warnings - you can try to increase the number of iterations, but this is not obligatory) 
+
+```{python}
+
+```
+    
+ii. Plot the classification accuracies for each time sample for the analysis with PCA and for the one without in the same plot. Have time (ms) on the _x_-axis and classification accuracy on the _y_-axis 
+
+```{python}
+
+```
+    
+
+iii. Describe the differences between the two analyses - focus on the time interval between 0 ms and 400 ms - describe in your own words why the logistic regression performs better on the PCA-reduced dataset around the peak magnetic activity  
+
+```{python}
+
+```
+    
 
