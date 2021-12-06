@@ -38,7 +38,7 @@ The function `equalize_targets` is supplied - this time, we will only work with 
 
 1) Create a covariance matrix, find the eigenvectors and the eigenvalues
     i. Load `megmag_data.npy` and call it `data` using `np.load`. You can use `join`, which can be imported from `os.path`, to create paths from different string segments 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #import packages
 import numpy as np
 import pandas as pd
@@ -46,6 +46,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression 
 from sklearn.model_selection import cross_val_score 
 from sklearn.model_selection import StratifiedKFold 
+from sklearn.decomposition import PCA
 
 
 #load data
@@ -56,7 +57,7 @@ y = np.load("/Users/rikkeuldbaek/Desktop/Cognitive Science/3rd semester/Methods 
 
 
 ii. Equalize the number of targets in `y` and `data` using `equalize_targets`  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #defined function to equalize number of targets in y and data
 def equalize_targets(data, y):
     np.random.seed(7)
@@ -80,14 +81,14 @@ def equalize_targets(data, y):
     return new_data, new_y
 
 #equalizing (overwriting) the data, so I have 98 elements of each PAS rating
-data, y = equalize_targets(data, y)
-data.shape #98 elements of each PAS rating in depth
+data_equal, y = equalize_targets(data, y)
+data_equal.shape #98 elements of each PAS rating in depth
 y.shape #98 elements of each PAS rating in depth
 ```
 
 
 iii. Construct `times=np.arange(-200, 804, 4)` and find the index corresponding to 248 ms - then reduce the dimensionality of `data` from three to two dimensions by only choosing the time index corresponding to 248 ms (248 ms was where we found the maximal average response in Assignment 3) 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # Construct `times=np.arange(-200, 804, 4)`  (make a vector from -200 to 800, with a value each 4th millisecond)
 times = np.arange(-200, 804, 4)
 
@@ -96,13 +97,13 @@ times = np.arange(-200, 804, 4)
 np.where(times == 248) # index 112
 
 # reduce the dimensionality of `data` from three to two dimensions by only choosing the time index corresponding to 248 ms
-data= data[:,:,112] 
+data= data_equal[:,:,112] 
 data.shape # two dimensions now
 ```
 
 
 iv. Scale the data using `StandardScaler` 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #standardizing the data
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
@@ -112,7 +113,7 @@ scaled_data.shape
 
 
 v. Calculate the sample covariance matrix for the sensors (you can use `np.cov`) and plot it (either using `plt.imshow` or `sns.heatmap` (`import seaborn as sns`))  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # Create the sensor covariance matrix 
 cov_mat = np.cov(scaled_data.T)
 
@@ -144,7 +145,7 @@ vii. Run `np.linalg.matrix_rank` on the covariance matrix - what integer value d
 
 When using the `np.linalg.matrix_rank` on my covariance matrix I get the integer value 97. 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #Run `np.linalg.matrix_rank` on the covariance matrix 
 int_val = np.linalg.matrix_rank(cov_mat)
 print("The integer value is", int_val)
@@ -152,7 +153,7 @@ print("The integer value is", int_val)
 
 
 viii. Find the eigenvalues and eigenvectors of the covariance matrix using `np.linalg.eig` - note that some of the numbers returned are complex numbers, consisting of a real and an imaginary part (they have a _j_ next to them). We are going to ignore this by only looking at the real parts of the eigenvectors and -values. Use `np.real` to retrieve only the real parts 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #Find the eigenvalues and eigenvectors of the covariance matrix using `np.linalg.eig`
 from numpy.linalg import eig as eigenValuesAndVectors
 
@@ -165,14 +166,14 @@ eigen_vectors = np.real(eigen_vectors)
 
 2) Create the weighting matrix $W$ and the projected data, $Z$
 i. We need to sort the eigenvectors and eigenvalues according to the absolute values of the eigenvalues (use `np.abs` on the eigenvalues).  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #use `np.abs` on the eigenvalues
 eigen_values= np.abs(eigen_values)
 ```
 
 ii. Then, we will find the correct ordering of the indices and create an array, e.g. `sorted_indices` that contains these indices. We want to sort the values from highest to lowest. For that, use `np.argsort`, which will find the indices that correspond to sorting the values from lowest to highest. Subsequently, use `np.flip`, which will reverse the order of the indices.   
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #find the correct ordering of the indices and create an array, e.g. `sorted_indices` that contains these indices.
 sorted_indices= np.argsort(eigen_values)
 sorted_indices = np.flip(sorted_indices) #lowest to highest
@@ -183,7 +184,7 @@ sorted_indices
 iii. Finally, create arrays of sorted eigenvalues and eigenvectors using the `sorted_indices` array just created. For the eigenvalues, it should like this `eigenvalues = eigenvalues[sorted_indices]` and for the eigenvectors: `eigenvectors = eigenvectors[:, sorted_indices]`
 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #create arrays of sorted eigenvalues and eigenvectors using the `sorted_indices` array just created
 eigen_values = eigen_values[sorted_indices]
 eigen_vectors = eigen_vectors[:,sorted_indices]
@@ -192,10 +193,9 @@ eigen_vectors = eigen_vectors[:,sorted_indices]
 
 iv. Plot the log, `np.log`, of the eigenvalues, `plt.plot(np.log(eigenvalues), 'o')` - are there some values that stand out from the rest? In fact, 5 (noise) dimensions have already been projected out of the data - how does that relate to the matrix rank (Exercise 1.1.vii)  
 
-Yes 5 values stand out from the rest. When looking at the sorted_indices it is evident that the last 5 values are much more negative (-35 to -39) than the rest 97 values.
- *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
+Yes 5 values stand out from the rest. When looking at the sorted_indices it is evident that the last 5 values are much more negative (-35 to -39) than the rest 97 values. In fact, these 97 values are directly related to the 97 values in the matrix rank.
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #plot the log of the eigenvalues
 plt.figure()
 plt.plot(np.log(eigen_values), 'rx')
@@ -210,13 +210,13 @@ log_eigen[sorted_indices] #the five last values are extremely negative
 ```
 
 v. Create the weighting matrix, `W` (it is the sorted eigenvectors)  
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #Create the weighting matrix, `W`
 W = eigen_vectors[:,sorted_indices]
 ```
 
 vi. Create the projected data, `Z`, $Z = XW$ - (you can check you did everything right by checking whether the $X$ you get from $X = ZW^T$ is equal to your original $X$, `np.isclose` may be of help)'
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #Create the projected data, `Z`
 Z  = scaled_data @ W #where scaled data is my X
 
@@ -228,14 +228,11 @@ np.isclose(X_check, scaled_data)  # needs to be TRUE,
 
 vii. Create a new covariance matrix of the principal components (n=102) - plot it! What has happened off-diagonal and why?
 
-The sporadic off-diagonal activation has been reduced efficiently.
-There is almost no covariance left in the matrix of the principal components, i.e most of the 102 principal components do not explain the same variance. 
-
-If they explained the same variance, we wouldn't use them, we'd want them to explain different things. 
+The sporadic off-diagonal activation has been reduced efficiently. There is almost no covariance left in the matrix of the principal components, i.e most of the 102 principal components do not explain the same variance. 
 
  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # Create the eigen covariance matrix 
 eigen_cov_mat = np.cov(Z.T)
 
@@ -269,8 +266,9 @@ for i in range(102):
   logReg.fit(Z[:,0:i+1], y) #
   fit_score = logReg.score(Z[:,0:i+1], y)
   scores_1.append(fit_score)
+```
 
-
+```{python,  message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # minimum and maximum values
 np.min(scores_1)
 np.max(scores_1)
@@ -279,7 +277,7 @@ np.max(scores_1)
 
 ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - what is the general trend and why is this so?
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #plot 1 (only logistic regression), x=  principal components (102), y= classification accuracy
 plt.figure()
 plt.plot(scores_1)
@@ -292,13 +290,11 @@ plt.show()
 
 iii. In terms of classification accuracy, what is the effect of adding the five last components? Why do you think this is so?
 
-Adding the five last components have very little effect as visualised in the plot. This is because they have projected out of the data .... (???)
+Adding the five last components have very little effect on the classification accuracy as visualized in the plot. This is because they have projected out of the data .... (???)
 
  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
 ```{python}
-
-
 
 ```
     
@@ -320,22 +316,19 @@ for i in range(102):
   cv_scores.append(np.mean(cross_val_scores))
 ```
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # minimum and maximum values
 np.min(cv_scores)
 np.max(cv_scores)
-
 ```
     
 
 ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - how is this plot different from the one in Exercise 2.1.ii?
 
-In plot 1 it looks like the classification accuracy score gradually becomes better when adding a principle component at each fit. Using cross validation when fitting the logistic regression, plot 2 shows a more accurate distribution of the classification accuracy score for the principle components, since we cross validate with 5 folds, and therefore let the model train and test 5 times on different parts of the data . This way we get a better indication of how well our model will perform on data it has not seen before, unlike running logistic regression with in-sample validation. 
+In plot 1 it looks like the classification accuracy score gradually becomes better when adding a principle component at each fit. Using cross validation when fitting the logistic regression, plot 2 shows a more accurate distribution of the classification accuracy score for the principle components, since we cross validate with 5 folds, and therefore let the model train and test 5 times on different parts of the data. This way we get a better indication of how well our model will perform on data it has not seen before, unlike running logistic regression with in-sample validation. 
 Note, the scale of classification score on the y-axis is very different from plot 1 and plot 2, in plot 1 it ranges from around 0.27 to 0.63, while in plot 2 it ranges from 0.23 to 0.37.
 
- *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
-
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #plot 2 (using cross validation), x=  principal components (102), y= classification accuracy
 plt.figure()
 plt.plot(cv_scores)
@@ -351,7 +344,7 @@ iii. What is the number of principal components, $k_{max\_accuracy}$, that resul
 
 The first 16 principle components (indexed from 0) result in the greatest classification accuracy when cross-validated. 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #the maximal cross validation score the model
 np.amax(cv_scores) #0.3688291139240506
 np.argmax(cv_scores)  # PC 15 
@@ -362,7 +355,7 @@ iv. How many percentage points is the classification accuracy increased with rel
 
 The increase of classification accuracy in percentage points is 7%. 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # Runing cross validation model on full dimensional data
 full_data_cv_scores = cross_val_score(logReg, scaled_data, y, cv=cv)
 np.mean(full_data_cv_scores) #0.2903164556962025
@@ -377,11 +370,16 @@ np.amax(cv_scores) -np.mean(full_data_cv_scores)  #0.07851265822784809
 
 v. How do the analyses in Exercises 2.1 and 2.2 differ from one another? Make sure to comment on the differences in optimization criteria.
 
- *!!!!!!!!!!!!!!!!!!!!!!!!!! what do you mean lau <3 <<3!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+In exercise 2.1 we use logistic regression with in-sample validation, which means that we train and test our model on the same train and test set throughout the entire analysis. This means the model only becomes really good at predicting that specific test set, and will perform worse when predicting unseen new data.
+
+In exercise 2.2 we use cross-validation with 5 folds, which means that we split our whole data into training and test set through 5 iterations (5 folds) and get a performance measure (classification accuracy score) for each fold. Then we take the mean of the performance measure from the 5 folds in order to evaluate our model. This way the model becomes better at predicting unseen new data. 
+
+
+ *!!!!!!!!!!!!!!!!!!!!!!!!!! what do you mean by optimization criterion <3 <<3!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
   *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
    *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 
 ```
     
@@ -390,21 +388,85 @@ v. How do the analyses in Exercises 2.1 and 2.2 differ from one another? Make su
 
 i. For __each__ of the 251 time samples, use the same estimator and cross-validation as in Exercises 2.1.i and 2.2.i. Run two analyses - one where you reduce the dimensionality to $k_{max\_accuracy}$ dimensions using `PCA` and one where you use the full data. Remember to scale the data (for now, ignore if you get some convergence warnings - you can try to increase the number of iterations, but this is not obligatory) 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+#my model from before
+logReg = LogisticRegression(penalty ='none', solver= 'newton-cg', random_state=1) 
+
+
+
+############# analysis 1 - reduced dimensions = 16
+pca_15 = PCA(n_components=15) #number of components 
+cv_scores_pca_15 =  [] #make an empty list
+
+for i in range(251):
+  transformed_reduced_data = scaler.fit_transform(data_equal[:,:,i]) # transform the data first
+  PCA_15 = pca_15.fit_transform(transformed_reduced_data)
+  logReg.fit(PCA_15, y) #loop and fit through the transformed data
+  pca_scores_1= cross_val_score(logReg, PCA_15, y, cv=5) #calculate cross validation scores
+  cv_scores_pca_15.append(np.mean(pca_scores_1)) #append to the list 'cv_scores'
+
+
+############# analysis 2 - All data
+pca_102 = PCA(n_components=102) #number of components 
+cv_score_pca_102 = [] #make an empty list
+
+for i in range(251):
+  transformed_all_data = scaler.fit_transform(data_equal[:,:,i]) # transform the data first
+  PCA_102 = pca_102.fit_transform(transformed_all_data)
+  logReg.fit(PCA_102, y) #loop and fit through the transformed data
+  pca_scores_2= cross_val_score(logReg, PCA_102, y, cv=5) #calculate cross validation scores
+  cv_score_pca_102.append(np.mean(pca_scores_2)) #append to the list 'cv_scores'
 
 ```
     
 ii. Plot the classification accuracies for each time sample for the analysis with PCA and for the one without in the same plot. Have time (ms) on the _x_-axis and classification accuracy on the _y_-axis 
 
-```{python}
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 
+#plot 3 (using cross validation), x=  principal components (102), y= classification accuracy
+plt.figure()
+plt.plot(cv_score_pca_102)
+plt.plot(cv_scores_pca_15)
+plt.xlabel("Time in ms ")
+plt.ylabel("classification accuracy score")
+plt.title("Plot 3. Classification accuracies of the analysis with 102 and 16 components ")
+plt.legend(["102 principle components", "16 principle components"])
+plt.show()
+
+np.max(cv_scores_pca_15) #0.3559493670886076
 ```
     
 
 iii. Describe the differences between the two analyses - focus on the time interval between 0 ms and 400 ms - describe in your own words why the logistic regression performs better on the PCA-reduced dataset around the peak magnetic activity  
 
-```{python}
+The main difference between the two analysis, when focusing on the time interval 0ms - 400 ms, is the number of principal components used when classifying. According to the plot 3, it seems like the first 16 principle components (indexed from 0) result in the greatest classification accuracy of 36%, while the total number of principle components (102) performs only a little worse with a maximal classification accuracy of 34%. Even though the 16 principle components seem to perform better, it is in fact only a slightly better performance than the 102 principle components. 
 
+Why does it perform better on PCA reduced dataset around the peak :)) ??
+
+The model performs better on the PCA-reduced dataset (16 principle components), because we got rid of covariated variables which did not contribute in the classification. This subset of PCA-reduced data does not contain any disturbing noise from the remaining principle components, and only contains what actually contributes most to the classification. 
+
+
+
+
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
+
+
+```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+#plot 3 (using cross validation), x=  principal components (102), y= classification accuracy
+plt.figure()
+plt.plot(times,cv_score_pca_102)
+plt.plot(times,cv_scores_pca_15)
+plt.xlabel("Time in ms ")
+plt.ylabel("classification accuracy score")
+plt.title("Plot 3. Classification accuracies of the analysis with 102 and 16 components ")
+plt.legend(["102 principle components", "16 principle components"])
+plt.axvline((times[150]), color= "red")
+plt.axvline((times[50]), color= "red")
+plt.show()
+
+#maximum classification scores
+np.max(cv_scores_pca_15) #0.3559493670886076
+np.max(cv_score_pca_102) #0.3435443037974684
 ```
-    
+
 
