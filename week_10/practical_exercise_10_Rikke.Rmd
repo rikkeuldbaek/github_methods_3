@@ -370,10 +370,16 @@ np.amax(cv_scores) -np.mean(full_data_cv_scores)  #0.07851265822784809
 
 v. How do the analyses in Exercises 2.1 and 2.2 differ from one another? Make sure to comment on the differences in optimization criteria.
 
-In exercise 2.1 we use logistic regression with in-sample validation, which means that we train and test our model on the same train and test set throughout the entire analysis. This means the model only becomes really good at predicting that specific test set, and will perform worse when predicting unseen new data.
+In exercise 2.1 we use logistic regression with in-sample validation, which means our train and test data is unchanged throughout the modelling, i.e. we use the same training data to predict the the same test data throughout the entire analysis. This means the model only becomes really good at predicting that specific test set (as visualized in plot 1) but will perform worse when predicting unseen new data.
 
-In exercise 2.2 we use cross-validation with 5 folds, which means that we split our whole data into training and test set through 5 iterations (5 folds) and get a performance measure (classification accuracy score) for each fold. Then we take the mean of the performance measure from the 5 folds in order to evaluate our model. This way the model becomes better at predicting unseen new data. 
+In exercise 2.2 we use cross-validation with 5 folds, which means that we split our whole data into training and test set through 5 iterations (5 folds) and get a performance measure (classification accuracy score) for each fold. Then we take the mean of the performance measure from the 5 folds in order to evaluate our model. This way the model becomes better at predicting unseen new data. What constitutes a better model is the classification accuracy of new unseen data, therefore cross validation is the preferred analysis in this case. 
 
+
+ What do you mean by "optimization criteria"?
+
+- Lau: How it is decided what constitutes a better model - it is done in different ways in the two exercises
+
+What constitutes a better model is the classification accuracy of new unseen data, therefore cross validation is the preferred analysis in this case.  (out of sample error? )
 
  *!!!!!!!!!!!!!!!!!!!!!!!!!! what do you mean by optimization criterion <3 <<3!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
   *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
@@ -444,9 +450,6 @@ The main difference between the two analysis, when focusing on the time interval
 Why does it perform better on PCA reduced dataset around the peak :)) ??
 
 The model performs better on the PCA-reduced dataset (16 principle components), because we got rid of covariated variables which did not contribute in the classification. This subset of PCA-reduced data does not contain any disturbing noise from the remaining principle components, and only contains what actually contributes most to the classification. 
-
-
-
 
 *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 

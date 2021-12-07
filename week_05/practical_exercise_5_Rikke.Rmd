@@ -255,7 +255,8 @@ We want to test a hypothesis for each of the three neighbouring differences in P
 ### i. Interpreting accuracy for "pas 1" and "pas 2"
 ##### First, use `summary` (yes, you are allowed to!) to argue that accuracy increases faster with objective evidence for PAS 2 than for PAS 1. 
 
-First I extracted the coefficients from the summary of model 7 and converted them to probabilities using invlogit(). The probability-table states that going from "pas 1" (our baseline/reference point) to "pas 2" increases the accuracy with 36 %. When considering both the effect of target.frames and pas (the interaction), the accuracy when going from "pas 1" to "pas 2" with objective evidence (target.frames:pas2) increases by 61%. Thus, we can conclude that accuracy increases faster with objective evidence for "pas 2" than for "pas 1". Furthermore, a plot of the predicted probabilities of correct (accuracy), shows that accuracy increases faster with objective evidence for "pas 2"(blue) than "pas 1"(red). 
+First I converted the coefficients from model 7 into probabilities using  invlogit(). The probability-table states that going from "pas 1" (our baseline/reference point) to "pas 2" increases the accuracy with 33 %. When considering both the effect of target.frames and pas (the interaction), the accuracy when going from "pas 1" to "pas 2" with objective evidence (target.frames:pas2) increases by 58%. Thus, we can conclude that accuracy increases faster with objective evidence for "pas 2" than for "pas 1". Furthermore, a plot of the predicted probabilities of correct (accuracy), shows that accuracy increases faster with objective evidence for "pas 2"(blue) than "pas 1"(red). 
+
 
 ```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #Fit a model based on the following formula: `correct ~ pas * target.frames + (target.frames | subject))`
@@ -264,10 +265,10 @@ model7 <- glmer(correct~pas*target.frames+ (target.frames|subject), data= df, bi
 summary(model7)
 
 # creating a table showing the percentile increase in accuracy for every fixed effect and interactions
-estimates <- c(coef(summary(model7))[1:8])
-increase_in_prob <- c(invlogit(estimates))
+increase_in_prob <- c(invlogit(-0.1216348), invlogit(-0.1216348 -0.57139), invlogit(-0.1216348 -0.53850), invlogit(-0.1216348 + 0.2015696), invlogit(-0.1216348 +0.1147983), invlogit(-0.1216348 +0.4471839), invlogit(-0.1216348 +0.7486912), invlogit(-0.1216348 +0.7592798))
 estimates_text <- c("intercept", "pas2", "pas3", "pas4", "target.frames", "target.frames:pas2", "target.frames:pas3", "target.frames:pas4")
 probability_table <- as_tibble(cbind(estimates_text, increase_in_prob));print(probability_table) #comment on these :))
+
 
 #plot of interaction
 theme_set(theme_sjplot())
@@ -372,6 +373,10 @@ See chunk
 ### iv. Comment on the differences between the fits - mention some advantages and disadvantages of each way.
 
 I have absolutely no clue.. 
+
+
+
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
 
 ```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 set.seed(1)
@@ -544,6 +549,8 @@ gridExtra::grid.arrange(sigplot,sigfit_pas_plot,modelfit_pas_plot)
 
 Once again, I have absolutely no clue.. 
 
+*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
+
 ```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 par <- c(0.5, 1, 1, 1)
 fn <- RSS
@@ -604,6 +611,7 @@ ggplot() +
   geom_function(aes(color = "pas2"), fun = mean.fit.pas2) +
   geom_function(aes(color = "pas3"), fun = mean.fit.pas3) +
   geom_function(aes(color = "pas4"), fun = mean.fit.pas4) +
-  labs(x = "target.frames", y = "Likelihood of being correct", title = "Title") +
+  labs(x = "target.frames", y = "Likelihood of being correct", title = "Estimated function at group-level") +
   theme_minimal() 
+
 ```

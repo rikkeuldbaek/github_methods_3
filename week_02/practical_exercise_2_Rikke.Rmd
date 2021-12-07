@@ -206,7 +206,6 @@ subplot <- ggplot(data = politeness, aes(x = scenario, y = f0mn, color = attitud
 When comparing the four models by residual standard deviation and Akaike Information Criterion, the fourth model (model 4) has the lowest residual standard deviation of 29.86727, likewise does the fourth model have the lowest AIC value of 2198.778. When comparing only the second-levels effects (model 2 and model 3) by their Conditional R2 (R2c) which states how much variance is explained by both random and fixed effects, it is shown that model 2 has an R2c of 0.698216 and model 3 has an R2c of 0.8002449, and thus stating that the second-level effect "subject" explains the most variance. 
 
       
-    
 ```{r}
 #model 1 - single level model that models _f0mn_ as dependent on _gender_
 model1 <- lm(f0mn ~ gender, data=politeness)
@@ -415,11 +414,4 @@ qqline(resid(model4))
 
 ```
 
-
-EXTRA
-
-```{r}
-pacman::p_load(effects)
-plot(allEffects(model6), multiline=TRUE, ci.style="bars")
-```
 
