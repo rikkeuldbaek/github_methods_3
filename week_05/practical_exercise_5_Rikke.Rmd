@@ -1,7 +1,7 @@
 ---
-title: "practical_exercise_5, Methods 3, 2021, autumn semester"
+title: "Assignment 2, Part 2, Methods 3, 2021, autumn semester"
 author: "Rikke Uldbæk"
-date: "27/11 2021"
+date: "November 27th 2021"
 output:
   pdf_document: default
   html_document:
@@ -110,7 +110,7 @@ When using log-likelihood function we avoid getting really small numbers (eg. 10
 From the comparison of my loglikelihood-function and the logLik-function it is evident that it's a little off, because the generated values are not the same. The LogLik function when applied on the partial pooling model = -10622.03 (df=3), and when my loglikelihood function is applied to the partial pooling model = -10565.53. 
 
 
-```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r,  message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #transform used variables (in order to make code run (the function))
 df$correct <- as.numeric(df$correct)
 
@@ -163,7 +163,7 @@ The model that performs the best is model 3; ${(correct ~ target.frames + (1+tar
 
 The fit from model 3, did not look good for subject 1, 4, 9, 12, 14, and 24. From visual inspection it seems like, especially subject 24 performed differently from the other subjects. Subject 24's performance was worse than chance, as this persons function is located below the nullmodel's function. When comparing Subject 24 and mu in a t-test the results yields: ${t(873) = 4.026, p<.01}$, thus subjects 24's mean is significantly different from the mean of all participants in the negative direction (the performance is worse by chance). 
 
-```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #Use log-likelihood ratio tests to argue for the addition of predictor variables
 nullmodel <-  glm(correct ~ 1, data=df, family=binomial(link = 'logit'))
 model1 <- glmer(correct ~ 1 + (1|subject), data=df,family=binomial(link = 'logit'))
@@ -215,7 +215,7 @@ When comparing model 5 (including pas as a fixed effect) and model 6 (including 
 The plot shows how target duration affects accuracy (per increment of target frame(1-6) the accuracy increases), and how this is a general tendency within all 4 "pas". Per increment af "pas" (1-4) the baseline of accuracy increases, except for "pas" 2, here "pas" 1 has a higher baseline than "pas" 2. 
 
 
-```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #adding pas as a fixed effect
 model5 <- glmer(correct ~ target.frames+pas + (1+target.frames|subject), data=df, family=binomial(link = 'logit'), control = glmerControl(optimizer="bobyqa")) #adding pas as a fixed effect
 
@@ -258,7 +258,7 @@ We want to test a hypothesis for each of the three neighbouring differences in P
 First I converted the coefficients from model 7 into probabilities using  invlogit(). The probability-table states that going from "pas 1" (our baseline/reference point) to "pas 2" increases the accuracy with 33 %. When considering both the effect of target.frames and pas (the interaction), the accuracy when going from "pas 1" to "pas 2" with objective evidence (target.frames:pas2) increases by 58%. Thus, we can conclude that accuracy increases faster with objective evidence for "pas 2" than for "pas 1". Furthermore, a plot of the predicted probabilities of correct (accuracy), shows that accuracy increases faster with objective evidence for "pas 2"(blue) than "pas 1"(red). 
 
 
-```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r,message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 #Fit a model based on the following formula: `correct ~ pas * target.frames + (target.frames | subject))`
 model7 <- glmer(correct~pas*target.frames+ (target.frames|subject), data= df, binomial(link = 'logit'))
 
@@ -295,7 +295,7 @@ When testing the above hypothesis, a p-value <.05 shows the accuracy does increa
 
 When testing the above hypothesis, a p-value >.05 shows the accuracy does not increase faster with objective evidence for "pas 4" than for "pas 3". 
 
-```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r,  message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # testing if accuracy does increase faster with objective evidence for "pas 2" than for "pas 1"
 contrast.vector1 <- matrix(c(0, 0, 0, 0, 0, 1, 0, 0), nrow=1)
 gh1 <- glht(model7, contrast.vector1)
@@ -318,7 +318,7 @@ print(summary(gh3)) # does not increase significantly faster
 
 The difference between PAS 2 and 1 (tested in 6.1.i) is 0.6099695, which is greater than the difference between PAS 4 and 3 (tested in 6.2.iii) which is 0.5026524. Our test of the hypothesis that accuracy increases faster with objective evidence for PAS 4 than for PAS 3 was also not significant.
 
-```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r,  message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 ## testing whether PAS 2 is different from PAS 1
 contrast.vector4 <- matrix(c(0, 0, 0, 0, 0, 1, 0, 0), nrow=1)
 gh4 <- glht(model7, contrast.vector4)
@@ -378,7 +378,7 @@ I have absolutely no clue..
 
 *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
 
-```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r,  message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 set.seed(1)
 
 ###function to minimize - function of residual sum of squares
@@ -551,7 +551,7 @@ Once again, I have absolutely no clue..
 
 *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
 
-```{r, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r,  message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 par <- c(0.5, 1, 1, 1)
 fn <- RSS
 method = 'L-BFGS-B'
