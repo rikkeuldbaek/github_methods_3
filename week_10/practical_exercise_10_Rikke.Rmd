@@ -132,13 +132,7 @@ plt.show()
 
 vi. What does the off-diagonal activation imply about the independence of the signals measured by the 102 sensors? 
 
-The off-diagonal activation imply that the 102 sensors do not really pick up independent signals. We see a lot of positive co-variation, which indicates a positive relationship, i.e. when one sensor deviates from the mean, then the other co-variated sensor deviates in the same direction.
-
- *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*
- 
-```{python}
-
-```
+The off-diagonal activation imply that the 102 sensors do not really pick up independent signals, meaning that some of the sensors probably pick up some of the same signals. This is made clear by the plot of the covariance matrix, where we see a lot of values in the off-diagonal that are non-zero (there are both high positive and negative covariance, as specified by the colorbar).
 
 
 vii. Run `np.linalg.matrix_rank` on the covariance matrix - what integer value do you get? (we'll use this later)  
@@ -228,7 +222,11 @@ np.isclose(X_check, scaled_data)  # needs to be TRUE,
 
 vii. Create a new covariance matrix of the principal components (n=102) - plot it! What has happened off-diagonal and why?
 
-The sporadic off-diagonal activation has been reduced efficiently. There is almost no covariance left in the matrix of the principal components, i.e most of the 102 principal components do not explain the same variance. 
+After we've performed the PCA on the covariance matrix, we can see that almost all of the covariance from the off-diagonal has been removed - this is due to the nature of Principal component analysis, which bundles together predictor variables that explains a lot of the same variance into one new principal component, that is made to minimize the covariance with the other principal components. The reason why we don't see any diagonal activation, is due to the very small numbers, it's only the first few principle components that we can see the covariance of, because the principle components are ordered in the rank of how much variance they explain. 
+
+After we performed the principal component analysis on the covariance matrix, which are sorted into the ranks of the PCAs that explains the most variance - from the covariance matrix of the PCA, we don't see any off-diagonal 
+
+therefore, the covariance off-diagonal has been put into the
 
  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
@@ -246,6 +244,11 @@ plt.title("Covariance matrix of the principal components (n=102)")
 plt.xlabel('Principal Components')
 plt.ylabel('Principal Components')
 plt.show()
+
+#as we see here, some of the first priciple components are huge compared to the last ones
+eigen_cov_mat[1,1] #16.153231721724463 (diagonal activation), large
+eigen_cov_mat[90,90] #0.04675149941476335 (diagonal activation), small
+eigen_cov_mat[90,70] # 1.5725817272855065e-16 (off-diagonal activation), even smaller! 
 ```
 
 
@@ -290,14 +293,8 @@ plt.show()
 
 iii. In terms of classification accuracy, what is the effect of adding the five last components? Why do you think this is so?
 
-Adding the five last components have very little effect on the classification accuracy as visualized in the plot. This is because they have projected out of the data .... (???)
+Adding the five last components have very little effect on the classification accuracy as visualized in the plot. The last 5 principle components explain very little variance, if any at all. Therefore it makes sense, when adding them in the logistic regression, that they do not contribute to the classification accuracy.
 
- *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
-
-```{python}
-
-```
-    
 
 2) Now, we are going to use cross-validation - we are using `cross_val_score` and `StratifiedKFold` from `sklearn.model_selection`
 i. Define the variable: `cv = StratifiedKFold()` and run `cross_val_score` (remember to set the `cv` argument to your created `cv` variable). Use the same `estimator` in `cross_val_score` as in Exercise 2.1.i. Find the mean score over the 5 folds (the default of `StratifiedKFold`) for each $k$, $k = [1, 2, ..., 101, 102]$  
@@ -374,21 +371,9 @@ In exercise 2.1 we use logistic regression with in-sample validation, which mean
 
 In exercise 2.2 we use cross-validation with 5 folds, which means that we split our whole data into training and test set through 5 iterations (5 folds) and get a performance measure (classification accuracy score) for each fold. Then we take the mean of the performance measure from the 5 folds in order to evaluate our model. This way the model becomes better at predicting unseen new data. What constitutes a better model is the classification accuracy of new unseen data, therefore cross validation is the preferred analysis in this case. 
 
+What constitutes a better model is the classification accuracy of new unseen data, therefore cross validation is the preferred analysis in this case, where with the other method, you end up with overfitting. 
 
- What do you mean by "optimization criteria"?
 
-- Lau: How it is decided what constitutes a better model - it is done in different ways in the two exercises
-
-What constitutes a better model is the classification accuracy of new unseen data, therefore cross validation is the preferred analysis in this case.  (out of sample error? )
-
- *!!!!!!!!!!!!!!!!!!!!!!!!!! what do you mean by optimization criterion <3 <<3!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
-  *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
-   *!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
-
-```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
-
-```
-    
 
 3) We now make the assumption that $k_{max\_accuracy}$ is representative for each time sample (we only tested for 248 ms). We will use the PCA implementation from _scikit-learn_, i.e. import `PCA` from `sklearn.decomposition`.
 
@@ -447,11 +432,8 @@ iii. Describe the differences between the two analyses - focus on the time inter
 
 The main difference between the two analysis, when focusing on the time interval 0ms - 400 ms, is the number of principal components used when classifying. According to the plot 3, it seems like the first 16 principle components (indexed from 0) result in the greatest classification accuracy of 36%, while the total number of principle components (102) performs only a little worse with a maximal classification accuracy of 34%. Even though the 16 principle components seem to perform better, it is in fact only a slightly better performance than the 102 principle components. 
 
-Why does it perform better on PCA reduced dataset around the peak :)) ??
-
 The model performs better on the PCA-reduced dataset (16 principle components), because we got rid of covariated variables which did not contribute in the classification. This subset of PCA-reduced data does not contain any disturbing noise from the remaining principle components, and only contains what actually contributes most to the classification. 
 
-*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!* 
 
 
 ```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
