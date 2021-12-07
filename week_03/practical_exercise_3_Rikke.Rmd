@@ -171,51 +171,20 @@ data$correct <- as.factor(data$correct)
 ```
  
 
-    iii. for the staircasing part __only__, create a plot for each subject where you plot the estimated function (on the _target.contrast_ range from 0-1) based on the fitted values of a model (use `glm`) that models _correct_ as dependent on _target.contrast_. These plots will be our _no-pooling_ model. Comment on the fits - do we have enough data to plot the logistic functions? 
+iii. for the staircasing part __only__, create a plot for each subject where you plot the estimated function (on the _target.contrast_ range from 0-1) based on the fitted values of a model (use `glm`) that models _correct_ as dependent on _target.contrast_. These plots will be our _no-pooling_ model. Comment on the fits - do we have enough data to plot the logistic functions? 
 
-Lau, I don't really get this exercise. I'm not sure you mean either complete pooling or no pooling, so I did both. 
+I'm not sure whether you mean complete pooling or no pooling, so I only did no pooling.
 
+### iii.  No pooling 
+The fits looks quite poor, because the fitted values does not resemble the sigmoid function. In order to get better fits (looking more sigmoid-like) we might need more data.
 
-### iii.  Complete pooling/ No pooling (?)
-The fits looks quite poor, because the fitted values does not resemble the sigmoid function.
 
 ```{r}
-#iii. 
-#----complete pooling model------#
-# Creating df only containing staircase trials
-staircase <- data %>% 
+## no pooling, glm for each subject 
+dfStair = df %>% 
   subset(trial.type == "staircase")
-
-# Complete pooling model
-complete_pool_model <- glm(correct ~ target.contrast, data = staircase, family=binomial)
-
-# Complete pooling plot
-ggplot(staircase, (aes(x = target.contrast, y = correct, color= subject)))+
-  geom_point()+
-  geom_line(aes(target.contrast, fitted(complete_pool_model))) +
-  facet_wrap(.~subject)+ 
-  labs(title = "Complete Pooling") +
-  theme_bw()
-
-#----no pooling model------#
-# No pooling with interaction effect with subject
-no_pooling_model<- glm(correct ~ target.contrast+ target.contrast*subject, data = staircase, family="binomial")
-
-# No pooling with interaction effect with subject PLOT
-ggplot(staircase, (aes(x = target.contrast, y = correct, color=subject)))+ 
-  geom_point()+
-  geom_line(aes(target.contrast,fitted(no_pooling_model) ), color = "black") +
-  facet_wrap(.~subject)+ 
-  labs(title = "No Pooling")
-
-
-## another take, no pooling, glm for each subject 
-dfStair = data %>% 
-  subset(trial.type == "staircase")
-
 dfStair$subject = gsub("(?<![0-9])0+", "", dfStair$subject, perl = TRUE)
 dfStair$subject = as.integer(dfStair$subject)
-
 nopoolfun <- function(i){
   dat <- dfStair[which(dfStair$subject == i),]
   model <- glm(correct~target.contrast, family = 'binomial', data=dat)
@@ -227,22 +196,17 @@ plot <- ggplot(plot_dat, aes(x = target.contrast, y = fitted))+
   xlab('Target Contrast')+
   ylim(c(0,1))+
   theme_minimal()
-print(plot)
-}
-
-# Running the function for each participant
-for (i in 1:29){
-  nopoolfun(i)
+return(plot)
 }
 
 library(gridExtra)
+
 subjects <- c(1:16)
 plots <- lapply(subjects, FUN=nopoolfun)
 do.call(grid.arrange,  plots)
-
 subjects <- c(17:29)
 plots <- lapply(subjects, FUN=nopoolfun)
-do.call(grid.arrange,plots)
+do.call(grid.arrange,  plots)
 
 ```
 
@@ -251,15 +215,30 @@ do.call(grid.arrange,plots)
 
 
 ```{r}
-# Partial pooling model
-partial_pool_model <- glmer(correct~target.contrast + (target.contrast|subject), data = staircase, family = "binomial")
-
-# plot
-ggplot(staircase, (aes(x = target.contrast, y = correct, color=subject)))+ 
-  geom_point()+
-  geom_line(aes(target.contrast, fitted(partial_pool_model)), color = "black") +
-  facet_wrap(.~subject)+ 
-  labs(title = "Partial pooling")
+#partial pool
+partialPoolModel = glmer(correct~target.contrast + (target.contrast|subject), family = 'binomial', dfStair)
+dfStair$yEstPartialPooling = fitted(partialPoolModel)
+poolNoPoolFun <- function(i){
+  dat <- dfStair[which(dfStair$subject == i),]
+  model <- glm(correct~target.contrast, family = 'binomial', data=dat)
+  fitted <- model$fitted.values
+  plot_dat <- data.frame(cbind(fitted,'target.contrast'=dat$target.contrast,'yEstPartialPooling' = dat$yEstPartialPooling))
+plot <- ggplot(plot_dat)+
+  geom_point(aes(x = target.contrast, y = fitted), color = "green")+
+  geom_line(aes(x = target.contrast, y = fitted), color = "green")+
+  geom_point(aes(x = target.contrast, y = yEstPartialPooling), color = "red")+
+  geom_line(aes(x = target.contrast, y = yEstPartialPooling), color = "red")+
+  xlab('Target Contrast')+
+  ylim(c(0,1))+
+  theme_minimal()
+return(plot)
+}
+subjects <- c(1:16)
+plots <- lapply(subjects, FUN=poolNoPoolFun)
+do.call(grid.arrange,  plots)
+subjects <- c(17:29)
+plots <- lapply(subjects, FUN=poolNoPoolFun)
+do.call(grid.arrange,  plots)
 
 ```
  
@@ -267,8 +246,8 @@ ggplot(staircase, (aes(x = target.contrast, y = correct, color=subject)))+
 ### v - Describe in own words
 v. in your own words, describe how the partial pooling model allows for a better fit for each subject. 
 
+In the plot I've compared both partial pooling and no pooling, where the preditcted probabilities are plotted as the following: red is partial pooling and green is no pooling. Compared to no pooling, partial pooling provides better insight about the population (general tendencies), while allowing the model to take individual differences into account (individual baselines), this is visually evident in the plots, where the red graphs (partial pooling) does not vary much in between subject as the green graphs (no pooling). With partial pooling we can both make a great fit for each subject and make it generalizable (in contrast to no pooling). 
 
-Compared to no pooling and complete pooling models, partial pooling provides better insight about the population (general tendencies), while allowing the model to take individual differences into account (individual baselines). With partial pooling we can both make a great fit for each subject and make it generalizable (in contrast to no pooling). 
 
 
 ## Exercise 2
@@ -283,7 +262,7 @@ Now we __only__ look at the _experiment_ trials (_trial.type_)
 
 Before log transformation of the 4 subjects objective response time based on the model with only an intercept, the residuals indicate a right skewed tail, as they deviate from the line, i.e deviate from normality. 
 
-After log transformation of the 4 subjects objective response time based on the model with only an intercept, the residuals indicate both a left skewed tail and a tiny right skewed tail. The log transformation of the objective response time data (variable= "rt.obj") improves the Q-Q-plot, as the dots generally falls better on the line.
+After log transformation of the 4 subjects objective response time based on the model with only an intercept, the residuals indicate both a left skewed tail and a tiny right skewed tail. The log transformation of the objective response time data (variable= "rt.obj") improves the Q-Q-plot, as the dots generally falls better on the line , i.e the residuals look more normally distributed.
 
 ```{r}
 #experiment dataframe
@@ -324,30 +303,30 @@ subjects_model_log4 <- lm(log_rt.obj~1, data= subject4)#log trans
 
 
 #plotting the residuals in a QQ-plot
-qqnorm(resid(subjects_model1))
+qqnorm(resid(subjects_model1), col = "blue")
 qqline(resid(subjects_model1))
 
-qqnorm(resid(subjects_model2))
+qqnorm(resid(subjects_model2), col = "red")
 qqline(resid(subjects_model2))
 
-qqnorm(resid(subjects_model3))
+qqnorm(resid(subjects_model3), col = "green")
 qqline(resid(subjects_model3))
 
-qqnorm(resid(subjects_model4))
+qqnorm(resid(subjects_model4), col = "black")
 qqline(resid(subjects_model4))
 
 
 #plotting the residuals after log-transformation
-qqnorm(resid(subjects_model_log1))
+qqnorm(resid(subjects_model_log1), col = "blue")
 qqline(resid(subjects_model_log1))
 
-qqnorm(resid(subjects_model_log2))
+qqnorm(resid(subjects_model_log2), col = "red")
 qqline(resid(subjects_model_log2))
 
-qqnorm(resid(subjects_model_log3))
+qqnorm(resid(subjects_model_log3), col = "green")
 qqline(resid(subjects_model_log3))
 
-qqnorm(resid(subjects_model_log4))
+qqnorm(resid(subjects_model_log4), col = "black")
 qqline(resid(subjects_model_log4))
 ```
 
@@ -359,11 +338,11 @@ qqline(resid(subjects_model_log4))
 #### 2. i-ii.Partial pooling
 
 i. 
-The partial pooling model 4 (log(rt.obj) ~ task + (1 + task | subject) + (1 | trial)), has the lowest sigma as well as AIC value. This is the model that predicts objective response times (rt.obj) dependent on task (fixed effects), modelling a random intercepts for subjects and trial as well as random slopes for task. Random intercepts were modeled for subject as one would expect individual baseline performance differences among different participants. Trial as also been modelled as random intercepts as you would expect different trials to vary in difficulty.
+First, I built different models, in order to argue which effects to include. The partial pooling model 4 (log(rt.obj) ~ task + (1 + task | subject) + (1 | trial)), has the lowest sigma as well as AIC value. This is the model that predicts objective response times (rt.obj) dependent on task (fixed effects), modelling a random intercepts for subjects and trial as well as random slopes for task. Random intercepts were modeled for subject as one would expect individual baseline performance differences among different participants. Trial as also been modelled as random intercepts as you would expect different trials to vary in difficulty.
 
 
 ii. 
-The estimates for quadruplet and singles are negative, which indicates that participants have a faster objective response time compared to the intercept (pair). When comparing the tasks "quadruplet" and "singles" the people are generally faster to the "single" task. The effect is, however, strongest from changing from *pairs* to *singles* (the respodents generally complete the singles tasks faster, relative to the quadruplet tasks).
+The estimates for quadruplet and singles are negative, which indicates that participants have a faster objective response time compared to the intercept (pair). When comparing the tasks "quadruplet" and "singles" the people are generally faster to the "single" task. The effect is, however, strongest from changing from *pairs* to *singles* (the respondents generally complete the singles tasks faster, relative to the quadruplet tasks). I logged the rt.obj, due to the result in the previous exercise, where we found the logged version of rt.obj better for use (more normalized residuals).
   
 
 ```{r}
@@ -404,7 +383,7 @@ summary(partial4)
     
 #### 3. i-iii. singular fit & convergence
 
-i.When adding different types of group intercepts (random effect), I can only add two intercepts: (1|subject)+(1|trial), before the model meets singular fits issues.
+i.When adding different types of group intercepts (random effect), I can only add two intercepts: (1|subject)+(1|trial), before the model meets singular fit issues.
 
 
 ii.By adding (1|subject)+(1|trial)+(1|task) to the existing model with "pas" and "task" as fixed effects interaction, the model met singular fits issues. When inspecting the variance vector of the model with singular fits (np_model_4), it shows that the reason for the singular fit, is that the model contains a random-effect variance estimate of zero, this random-effect is (1|task). 
@@ -423,7 +402,7 @@ np_model_4 <- lmer(rt.obj ~task +pas + pas*task +(1|subject)+(1|trial)+ (1|task)
 
 #cheking out why np_model_4 has a singular fit
 print(VarCorr(np_model_4), comp='Variance') # random effect task variance = 0
-# when a random effect task variance =  0 (er det fordi den random effect ikke forklarer noget som helst)
+# when a random effect task variance =  0, this random effect does not explain anything
 
 ```
 
@@ -438,8 +417,6 @@ print(VarCorr(np_model_4), comp='Variance') # random effect task variance = 0
 data_count <- data %>% 
   group_by(subject, task, pas) %>% 
   summarise("count" = n())
-
-ls.str(data_count)
 ```        
 
 
@@ -453,13 +430,12 @@ ls.str(data_count)
     vii. include a plot that shows the estimated amount of ratings for four subjects of your choosing
     
 #### 2. i-vii. Modelling "count"
-
 i. 
-Poisson distribution.
+Poisson distribution because we are dealing with count data.
 
 ii.
-The "pas" variable is encoded as a factor, meaning that it computes the analysis for each level separately . Thus, we'll get a slope for each separate level of "pas", where each slope is relative to the reference level. 
-  
+The "pas" variable is encoded as a factor, meaning that it computes the analysis for each level separately. Thus, we'll get a slope for each separate level of "pas", where each slope is relative to the reference level.
+
 
 iii.
 No convergence error occur if the aforementioned algorithm is used. 
@@ -469,13 +445,23 @@ iv.
 See chunk. 
 
 v.
-I would choose countmodel1 as it has the lowest AIC and the highest pseudo R2. I guess, that it conceptually also makes more sense to look at the interaction between "task" and "pas" and not how they individually predict "count". 
+I would choose countmodel1 as it has the lowest AIC, lowest residual standard deviation, and the highest pseudo R2. I guess, that it conceptually also makes more sense to look at the interaction between "task" and "pas" and not how they individually predict "count". 
 
 
 vi.
-The mixed effect model (count~pas*task + (1+pas|subject)) was constructed to predict "count" from the fixed effect (both main and interaction) between "pas" and "task" and the random slope "pas" given random intercept "subject". The direction of the slope (whether it is positive or negative) is highly dependent on the interaction between pas and task.
+We have used lmerTest (Kuznetsova, Brockhoff and Christensen, 2017) to perform a linear mixed effects analysis of the relationship between 'count', 'task' and 'pas'. Count indicates the number of times the subject categorized their experience as PAS 1-4 for each task. PAS indicates perceptual awareness scale ranging from 1-4, and task being 3 different versions (singles, pairs and quadruplets). The mixed effect model had the following syntax:
+ 
+ count ~ pas * task + ( 1 + pas | subject )
+ 
+The mixed effect model (countmodel1 = count~pas*task + (1+pas|subject)) was constructed to predict "count" from the fixed effect (both main and interaction) between "pas" and "task" and the random slope "pas" given random intercept "subject". The direction of the slope (whether it is positive or negative) is highly dependent on the interaction between pas and task.
 
-Both plots show, how the the rating of "pas" are to a certain extent similar across the 3 tasks. Though, "pas 3" is does not have as many ratings as the other ones.  
+Both fixed and random effects accounted for roughly 98% of variance in the pitch variable. The observed interactions between pas and task were significant with  p-values = < 0.05.
+
+This model has a RSS = 699.5, an AIC = 3148.4, and an R2c = 97.5. The model has a better AIC value than the other model (AIC= 3398.5), and a slightly better R2c and RSS. 
+
+Furthermore, the two plots show, how the the rating of "pas" are to a certain extent similar across the 3 tasks. Though, "pas 3" is does not have as many ratings as the other ones.  
+
+
 
 
 vii.
@@ -484,10 +470,15 @@ vii.
 #multilevel model 
 countmodel1 <- glmer(count~pas*task + (1+pas|subject), data = data_count, family = poisson, control = glmerControl(optimizer="bobyqa")) 
 
+#check why PAS is not really being modelled
 summary(countmodel1)
 
 # Model with only the main effects of pas and task
 countmodel2 <- glmer(count ~ pas + task + (1 + pas|subject), data = data_count, family = "poisson", control = glmerControl(optimizer="bobyqa")) 
+
+#residuals
+resids_countmodel1 <- sum(residuals(countmodel1)^2);print(resids_countmodel1)
+resids_countmodel2 <- sum(residuals(countmodel2)^2);print(resids_countmodel2)
 
 
 #akaike information criterion
@@ -508,8 +499,6 @@ bp <- ggplot(data_count, aes(x=pas, y=count, group=pas)) +
   geom_boxplot(aes(fill=pas))
 
 bp + facet_grid(task ~ .)
-
-#bp + facet_grid(pas ~ task, margins=TRUE)
 
 
 # plot for 4 subjects: 001, 002, 003, 004,
