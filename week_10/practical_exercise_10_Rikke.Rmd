@@ -350,7 +350,7 @@ np.argmax(cv_scores)  # PC 15
 
 #### iv. How many percentage points is the classification accuracy increased with relative to the to the full-dimensional, $d$, dataset 
 
-The increase of classification accuracy in percentage points is 7%. 
+The increase of classification accuracy in percentage points is 8%. 
 
 ```{python, message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # Runing cross validation model on full dimensional data
@@ -386,18 +386,18 @@ logReg = LogisticRegression(penalty ='none', solver= 'newton-cg', random_state=1
 
 
 ############# analysis 1 - reduced dimensions = 16
-pca_15 = PCA(n_components=15) #number of components 
-cv_scores_pca_15 =  [] #make an empty list
+pca_16 = PCA(n_components=16) #number of components 
+cv_scores_pca_16 =  [] #make an empty list
 
 for i in range(251):
   transformed_reduced_data = scaler.fit_transform(data_equal[:,:,i]) 
   # transform the data first
-  PCA_15 = pca_15.fit_transform(transformed_reduced_data)
-  logReg.fit(PCA_15, y) 
+  PCA_16 = pca_16.fit_transform(transformed_reduced_data)
+  logReg.fit(PCA_16, y) 
   #loop and fit through the transformed data
-  pca_scores_1= cross_val_score(logReg, PCA_15, y, cv=5) 
+  pca_scores_1= cross_val_score(logReg, PCA_16, y, cv=5) 
   #calculate cross validation scores
-  cv_scores_pca_15.append(np.mean(pca_scores_1)) 
+  cv_scores_pca_16.append(np.mean(pca_scores_1)) 
   #append to the list 'cv_scores'
 
 
@@ -424,23 +424,24 @@ for i in range(251):
 #plot 3 (using cross validation), x=  principal components (102), y= classification accuracy
 plt.figure()
 plt.plot(times,cv_score_pca_102)
-plt.plot(times,cv_scores_pca_15)
+plt.plot(times,cv_scores_pca_16)
 plt.xlabel("Time in ms ")
 plt.ylabel("classification accuracy score")
 plt.title("Plot 3. Classification accuracies of the analysis with 102 and 16 components ")
 plt.legend(["102 principle components", "16 principle components"])
-plt.axvline((times[150]), color= "red")
-plt.axvline((times[50]), color= "red")
+plt.xlim([0,400])
 plt.show()
 
 #maximum classification scores
-np.max(cv_scores_pca_15) #0.3559493670886076
+np.max(cv_scores_pca_16) #0.3559493670886076
 np.max(cv_score_pca_102) #0.3435443037974684
 ```
     
 
 #### iii. Describe the differences between the two analyses - focus on the time interval between 0 ms and 400 ms - describe in your own words why the logistic regression performs better on the PCA-reduced dataset around the peak magnetic activity  
 
-The main difference between the two analysis, when focusing on the time interval 0ms - 400 ms, is the number of principal components used when classifying. According to the plot 3, it seems like the first 16 principle components (indexed from 0) result in the greatest classification accuracy of 36%, while the total number of principle components (102) performs only a little worse with a maximal classification accuracy of 34%. Even though the 16 principle components seem to perform better, it is in fact only a slightly better performance than the 102 principle components. 
+The main difference between the two analysis, when focusing on the time interval 0ms - 400 ms, is the number of principal components used when classifying. According to the plot 3, it seems like the first 16 principle components (indexed from 0) result in the greatest classification accuracy of 36%, while the total number of principle components (102) performs only a little worse with a maximal classification accuracy of 34%. It makes sense, that the classification score for the reduced data is better at time point 248 as we found in the earlier assignment (Assignment 3) that this is the exact time point where the average peak of magnetic activity was highest. 
+
+Even though the 16 principle components seem to perform better, it is in fact only a slightly better performance than the 102 principle components. 
 
 The model performs better on the PCA-reduced dataset (16 principle components), because we got rid of covariated variables which did not contribute in the classification. This subset of PCA-reduced data does not contain any disturbing noise from the remaining principle components, and only contains what actually contributes most to the classification. 
